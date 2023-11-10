@@ -12,7 +12,7 @@ import * as THREE from 'three';
 			function init() {
 
 				camera = new THREE.PerspectiveCamera( 35, window.innerWidth / window.innerHeight, 0.1, 100);
-				camera.position.set( 10, 7, 100 );
+				camera.position.set( 10, 6, 190);
 
 				scene = new THREE.Scene();
 				scene.add( camera );
@@ -21,13 +21,13 @@ import * as THREE from 'three';
 				clock = new THREE.Clock();
 
 				const loader = new XYZLoader();
-				loader.load('models/_sym.xyz', function ( geometry ) {
+				loader.load('models/ico.xyz', function ( geometry ) {
 
-					geometry.center();
+					/*geometry.center();*/				
 
 					const vertexColors = ( geometry.hasAttribute( 'color' ) === true );
 
-					const material = new THREE.PointsMaterial( { size: 0.1, vertexColors: vertexColors } );
+					const material = new THREE.PointsMaterial( { size: 5, vertexColors: vertexColors } );
 
 					points = new THREE.Points( geometry, material );
 					scene.add( points );
