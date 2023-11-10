@@ -21,7 +21,7 @@ function init() {
 
     new RGBELoader()
         .setPath( 'equirectangular/' )
-        .load( 'quarry_01_1k.hdr', function ( texture ) {
+        .load( 'Space_8_sn.hdr', function ( texture ) {
 
             texture.mapping = THREE.EquirectangularReflectionMapping;
 
@@ -32,8 +32,8 @@ function init() {
 
             // model
 
-            const loader = new GLTFLoader().setPath( 'models/DamagedHelmet/glTF/');
-            loader.load('DamagedHelmet.gltf', function ( gltf ) {
+            const loader = new GLTFLoader().setPath( 'models/');
+            loader.load('SCOOF.glb', function ( gltf ) {
 
                 scene.add( gltf.scene );
 
@@ -56,8 +56,8 @@ function init() {
     controls.maxDistance = 10;
     controls.target.set( 0, 0, - 0.2 );
     controls.enablePan = false;
-    controls.maxAzimuthAngle = THREE.MathUtils.degToRad(90);
-    controls.minAzimuthAngle = THREE.MathUtils.degToRad(220);
+    //controls.maxAzimuthAngle = THREE.MathUtils.degToRad(90);
+    //controls.minAzimuthAngle = THREE.MathUtils.degToRad(220);
     //controls.minPolarAngle = THREE.MathUtils.degToRad(60);
     controls.update();
 
@@ -81,6 +81,9 @@ function onWindowResize() {
 function render() {
 
     renderer.render( scene, camera );
+    const canvas = renderer.domElement;
+    camera.aspect = canvas.clientWidth / canvas.clientHeight;
+    camera.updateProjectionMatrix();
 
 }
 
