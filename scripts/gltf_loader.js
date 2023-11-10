@@ -75,6 +75,14 @@ function onWindowResize() {
     render();
 
 }
+    // Создаем источник направленного света (DirectionalLight)
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(1, 1, 1);
+    scene.add(directionalLight);
+
+    // Создаем источник окружающего света (AmbientLight)
+    const ambientLight = new THREE.AmbientLight(0x404040, 5);
+    scene.add(ambientLight);
 
 //
 
