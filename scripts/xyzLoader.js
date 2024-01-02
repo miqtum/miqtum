@@ -11,8 +11,8 @@ import * as THREE from 'three';
 
 			function init() {
 
-				camera = new THREE.PerspectiveCamera( 35, window.innerWidth / window.innerHeight, 0.1, 100);
-				camera.position.set( 10, 6, 190);
+				camera = new THREE.PerspectiveCamera( 85, window.innerWidth / window.innerHeight, .1, 500);
+				camera.position.set( 10, 0, 190);
 
 				scene = new THREE.Scene();
 				scene.add( camera );
