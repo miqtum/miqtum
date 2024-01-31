@@ -2,19 +2,25 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8">
-		<title>project 2</title>
+		<title>project 2</title>    
 		<link rel="stylesheet" href="styles.css">        
-        <script type="importmap">
-            {
-              "imports": {
-                "three": "https://unpkg.com/three@0.158.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.158.0/examples/jsm/"
-              }
-            }
-        </script>
+    <script type="importmap">
+        {
+          "imports": {
+            "three": "https://unpkg.com/three@0.158.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.158.0/examples/jsm/"
+          }
+        }
+    </script>
 	</head>
-	<body>
+	<body>       
+    <div class="content">
+      <div class="buttons-wraper">
         <button onclick="document.location='index.html'">back</button>
-		<script type="module" src="scripts/cube.js"></script>
+      </div>
+      <div class="three_bg">
+        <script type="module" src="scripts/page2.js"></script> 
+      </div>    
+    </div>       
 	</body>
 </html>

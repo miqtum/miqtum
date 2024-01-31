@@ -4,6 +4,8 @@ import * as THREE from 'three';
 
 			let camera, controls, scene, renderer;
 
+			const container = document.querySelector(".three_bg");
+
 			init();
 			//render(); // remove when using next line for animation loop (requestAnimationFrame)
 			animate();
@@ -17,7 +19,7 @@ import * as THREE from 'three';
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
-				document.body.appendChild( renderer.domElement );
+				container.appendChild( renderer.domElement );
 
 				camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 1000 );
 				camera.position.set( 400, 200, 0 );
