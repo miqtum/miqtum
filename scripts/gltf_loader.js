@@ -51,6 +51,8 @@ function init() {
     container.appendChild( renderer.domElement );
 
     const controls = new OrbitControls( camera, renderer.domElement );
+    controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
+	controls.dampingFactor = .05;
     controls.addEventListener( 'change', render ); // use if there is no animation loop
     controls.minDistance = 5;
     controls.maxDistance = 5;
@@ -60,6 +62,7 @@ function init() {
     controls.minAzimuthAngle = THREE.MathUtils.degToRad(220);
     controls.minPolarAngle = THREE.MathUtils.degToRad(0);
     controls.update();
+    controls.
 
     window.addEventListener( 'resize', onWindowResize );
 
@@ -67,17 +70,17 @@ function init() {
 
 function onWindowResize() {
 
-    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.aspect = window.outerWidth / window.outerHeight;
     camera.updateProjectionMatrix();
 
-    renderer.setSize( window.innerWidth, window.innerHeight );
+    renderer.setSize( window.outerWidth, window.outerHeight );
 
     render();
 
 }
     // Создаем источник направленного света (DirectionalLight)
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-    directionalLight.position.set(1, 1, 1);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 100);
+    directionalLight.position.set(0, 0, 0);
     scene.add(directionalLight);
 
     // Создаем источник окружающего света (AmbientLight)
