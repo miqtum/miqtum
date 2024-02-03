@@ -24,22 +24,18 @@ body {
   overflow: hidden;
   background-size: cover;
   background-repeat: no-repeat;
-  /* background-image: url(./static/img1.jpg) */
+  background-image: url(./static/img1.jpg)
 }
 
 .three_bg {
   position: bottom;
   width: 100%;
   height: 100vh;
-  background: #00ff15;
+  background: #010044;
   color: #fff;
   overflow: visible;
   background-size: cover;
   background-repeat: no-repeat;  
-}
-
-.3dframe {
-
 }
 
 button {
