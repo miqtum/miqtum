@@ -1,7 +1,7 @@
 let t = 0; // time variable
 
 function setup() {
-  createCanvas(600, 600);
+  createCanvas(windowWidth, windowHeight);
   noStroke();
   fill(40, 200, 40);
 }
@@ -28,3 +28,7 @@ function draw() {
 
   t = t + 0.01; // update time
 }
+
+function windowResized() {
+    resizeCanvas(windowWidth, windowHeight);
+  }
