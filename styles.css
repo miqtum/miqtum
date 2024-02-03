@@ -29,21 +29,23 @@ body {
 
 .three_bg {
   position: bottom;
-  width: 100%;
+  width: 55%;
   height: 100vh;
-  background: #010044;
+  background: #000000;
   color: #fff;
+  border-width: thick;
   overflow: visible;
   background-size: cover;
   background-repeat: no-repeat;  
 }
 
-.5js {
+.iframe{
   position: bottom; 
-  width: 55%;
-  height: 100vh;
+  width: 100%;
+  height: 100vh;  
   background: #010044;
   color: #fff;
+  border-width: 0;
   overflow: visible;
   background-size: cover;
   background-repeat: no-repeat;  
