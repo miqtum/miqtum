@@ -38,6 +38,17 @@ body {
   background-repeat: no-repeat;  
 }
 
+.5js {
+  position: bottom; 
+  width: 55%;
+  height: 100vh;
+  background: #010044;
+  color: #fff;
+  overflow: visible;
+  background-size: cover;
+  background-repeat: no-repeat;  
+}
+
 button {
   color: rgb(187, 187, 187);
   display: block;
