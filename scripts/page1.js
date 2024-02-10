@@ -1,76 +1,92 @@
 import * as THREE from 'three';
 
-			import { XYZLoader } from 'three/addons/loaders/XYZLoader.js';
+import { XYZLoader } from 'three/addons/loaders/XYZLoader.js';
 
-			let camera, scene, renderer, clock;
+let camera, scene, renderer, clock, helper, points;
 
-			let points;
+const bg = document.querySelector(".three_bg");
+const loader = new XYZLoader();
 
-			const bg = document.querySelector(".three_bg");
+init();
+animate();
 
-			init();
-			animate();
+function init() {
 
-			function init() {
+	camera = new THREE.PerspectiveCamera( 85, window.innerWidth / window.innerHeight, .1, 500);
+	camera.position.set( 0, 0, 200);
 
-				camera = new THREE.PerspectiveCamera( 85, window.innerWidth / window.innerHeight, .1, 500);
-				camera.position.set( 10, 0, 190);
+	helper = new THREE.AxesHelper(100);
+	helper.position.set(0,0,0)
+	
 
-				scene = new THREE.Scene();
-				scene.add( camera );
-				camera.lookAt( scene.position );
+	scene = new THREE.Scene();
+	scene.add( camera );
+	scene.add(helper);
+	camera.lookAt(helper.position);
 
-				clock = new THREE.Clock();
+	clock = new THREE.Clock();
 
-				const loader = new XYZLoader();
-				loader.load('models/ico.xyz', function ( geometry ) {
+	
+	loader.load('models/ico.xyz', function ( geometry ) {
 
-					/*geometry.center();*/				
+		// geometry.;				
 
-					const vertexColors = ( geometry.hasAttribute( 'color' ) === true );
+		const vertexColors = ( geometry.hasAttribute( 'color' ) === true );
 
-					const material = new THREE.PointsMaterial( { size: 5, vertexColors: vertexColors } );
+		const material = new THREE.PointsMaterial( { size: 5, vertexColors: vertexColors } );
 
-					points = new THREE.Points( geometry, material );
-					scene.add( points );
+		points = new THREE.Points( geometry, material );
+		scene.add( points );
 
-				} );
-
-				//
-
-				renderer = new THREE.WebGLRenderer( { antialias: true } );
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				bg.appendChild( renderer.domElement );
+	} );
 
 				//
 
-				window.addEventListener( 'resize', onWindowResize );
+	renderer = new THREE.WebGLRenderer( { antialias: true } );
+	renderer.setPixelRatio( window.devicePixelRatio );
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	bg.appendChild( renderer.domElement );
 
-			}
+	//
 
-			function onWindowResize() {
+	window.addEventListener( 'resize', onWindowResize );
 
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
+	}
 
-				renderer.setSize( window.innerWidth, window.innerHeight );
+function onWindowResize() {
 
-			}
+	camera.aspect = window.innerWidth / window.innerHeight;
+	camera.updateProjectionMatrix();
 
-			function animate() {
+	renderer.setSize( window.innerWidth, window.innerHeight );
 
-				requestAnimationFrame( animate );
+}
+function animate() {
 
-				const delta = clock.getDelta();
+	requestAnimationFrame( animate );
 
-				if ( points ) {
+	const delta = clock.getDelta();
 
-					points.rotation.x += delta * 0.0;
-					points.rotation.y += delta * 0.1;
+	points.rotation.x += 0;
+	// points.rotation.y += delta*0.5;
+	points.rotation.z += delta*0.1;
 
-				}
+	// if ( points.rotation.y < 1 ) {
 
-				renderer.render( scene, camera );
+	// 	points.rotation.x += delta * 0.0;
+	// 	points.rotation.y += delta * 0.1;
 
-			}
+	// }
+
+	// else{
+
+	// 	points.rotation.x += delta * 0.1;
+	// 	// points.rotation.y -= delta * 0.1;
+
+	// } 
+		
+
+	renderer.render( scene, camera );
+
+}
+
