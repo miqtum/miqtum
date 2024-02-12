@@ -1,92 +1,74 @@
 import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 
-import { XYZLoader } from 'three/addons/loaders/XYZLoader.js';
+// setup scene & camera
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x0047ab, 0.005);
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+camera.position.z = 5;
 
-let camera, scene, renderer, clock, helper, points;
 
-const bg = document.querySelector(".three_bg");
-const loader = new XYZLoader();
+//#region ======================particles
+const buffer = new THREE.BufferGeometry();
+const vertices = [];
+const size = 2000;
+const wallpaper = document.querySelector(".three_bg");
 
-init();
-animate();
+let clock = new THREE.Clock();
 
-function init() {
+for (let i = 0; i<1000; i++){
+    const x  = (Math.random() * size + Math.random() * size)/2 - size/2;
+    const y  = (Math.random() * size + Math.random() * size)/2 - size/2;
+    const z  = (Math.random() * size + Math.random() * size)/2 - size/2;
 
-	camera = new THREE.PerspectiveCamera( 85, window.innerWidth / window.innerHeight, .1, 500);
-	camera.position.set( 0, 0, 200);
-
-	helper = new THREE.AxesHelper(100);
-	helper.position.set(0,0,0)
-	
-
-	scene = new THREE.Scene();
-	scene.add( camera );
-	scene.add(helper);
-	camera.lookAt(helper.position);
-
-	clock = new THREE.Clock();
-
-	
-	loader.load('models/ico.xyz', function ( geometry ) {
-
-		// geometry.;				
-
-		const vertexColors = ( geometry.hasAttribute( 'color' ) === true );
-
-		const material = new THREE.PointsMaterial( { size: 5, vertexColors: vertexColors } );
-
-		points = new THREE.Points( geometry, material );
-		scene.add( points );
-
-	} );
-
-				//
-
-	renderer = new THREE.WebGLRenderer( { antialias: true } );
-	renderer.setPixelRatio( window.devicePixelRatio );
-	renderer.setSize( window.innerWidth, window.innerHeight );
-	bg.appendChild( renderer.domElement );
-
-	//
-
-	window.addEventListener( 'resize', onWindowResize );
-
-	}
-
-function onWindowResize() {
-
-	camera.aspect = window.innerWidth / window.innerHeight;
-	camera.updateProjectionMatrix();
-
-	renderer.setSize( window.innerWidth, window.innerHeight );
-
+    vertices.push(x,y,z);
 }
+
+const prtclsMaterial = new THREE.PointsMaterial({
+    size: 3,
+    color: 0Xfffff28b4,
+});
+
+const particles = new THREE.Points(buffer, prtclsMaterial);
+scene.add(particles);
+//#endregion
+
+buffer.setAttribute(
+    "position",
+    new THREE.Float32BufferAttribute(vertices, 3)
+);
+
+// setup renderer
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+
+// add renderer to body
+wallpaper.appendChild(renderer.domElement);
+
+const loader = new GLTFLoader().setPath( 'models/');
+loader.load('SCOOF.glb', function ( gltf ) {
+
+	scene.add( gltf.scene );
+
+
+} );
+
+// animation function
 function animate() {
 
-	requestAnimationFrame( animate );
+    requestAnimationFrame(animate);
 
-	const delta = clock.getDelta();
+    const delta = clock.getDelta();
 
-	points.rotation.x += 0;
-	// points.rotation.y += delta*0.5;
-	points.rotation.z += delta*0.1;
+    //======= animate particles
 
-	// if ( points.rotation.y < 1 ) {
+    particles.rotation.y += delta * 0.03;	
 
-	// 	points.rotation.x += delta * 0.0;
-	// 	points.rotation.y += delta * 0.1;
+    // render the scene with camera
+    renderer.render(scene, camera);
+};
 
-	// }
-
-	// else{
-
-	// 	points.rotation.x += delta * 0.1;
-	// 	// points.rotation.y -= delta * 0.1;
-
-	// } 
-		
-
-	renderer.render( scene, camera );
-
-}
-
+// start animation
+animate();

@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { Data3DTexture } from "three";
 import { XYZLoader } from 'three/addons/loaders/XYZLoader.js';
 
 let camera, scene, renderer, clock;

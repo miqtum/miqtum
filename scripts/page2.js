@@ -2,14 +2,13 @@ import * as THREE from 'three';
 
 // setup scene
 const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x0047ab, 0.09, 50);
+scene.fog = new THREE.FogExp2(0x0047ab, 0.1, 50);
 
+//#region ====================particles
 const buffer = new THREE.BufferGeometry();
 const vertices = [];
 const size = 2000;
 const wallpaper = document.querySelector(".three_bg");
-
-let clock = new THREE.Clock();
 
 for (let i = 0; i<1000; i++){
     const x  = (Math.random() * size + Math.random() * size)/2 - size/2;
@@ -35,17 +34,9 @@ const prtclsMaterial = new THREE.PointsMaterial({
 
 const particles = new THREE.Points(buffer, prtclsMaterial);
 scene.add(particles);
+//#endregion
 
-
-// create cube geometry and material
-const geometry = new THREE.BoxGeometry(1, 1, 1);
-const material = new THREE.MeshBasicMaterial({color: 0x00ff00});
-
-// create cube using geometry and material
-const cube = new THREE.Mesh(geometry, material);
-
-// add cube to scene
-scene.add(cube);
+let clock = new THREE.Clock();
 
 // setup renderer
 const renderer = new THREE.WebGLRenderer();
@@ -62,10 +53,7 @@ function animate() {
 
     const delta = clock.getDelta();
 
-    // rotate cube
-    cube.rotation.y += 0.01;
-
-    //======= animate perticles
+    //======= animate particles
 
     particles.rotation.z += delta * 0.1;	
 
