@@ -9,7 +9,7 @@ let clock = new THREE.Clock();
 
 scene = new THREE.Scene();
 
-const wallpaper = document.querySelector(".three_bg");
+//const wallpaper = document.querySelector(".three_bg");
 
 
 const directionalLight = new THREE.DirectionalLight(0xffffff, .4);
@@ -59,17 +59,18 @@ renderer.setPixelRatio( window.devicePixelRatio );
 renderer.setSize( window.innerWidth, window.innerHeight );
 document.body.appendChild( renderer.domElement );
 
-// new RGBELoader()
-//     .setPath( 'equirectangular/' )
-//     .load( 'SPACE.hdr', function ( texture ) {
+new RGBELoader()
+    .setPath( 'equirectangular/' )
+    .load( 'SPACE.hdr', function ( texture ) {
 
-//         texture.mapping = THREE.EquirectangularReflectionMapping;
+        texture.mapping = THREE.EquirectangularReflectionMapping ;
+        
 
-//         // scene.background = texture;
-//         // scene.environment = texture;            
+        scene.background = texture;
+        scene.environment = texture;            
 
-//         // model
-//     } );
+        
+    } );
   
 const controls = new OrbitControls( camera, renderer.domElement );
 controls.enableDamping = true; 

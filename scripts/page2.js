@@ -1,65 +1,231 @@
+// import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// let controls, camera, scene, renderer;
+
+
+// init();
+// animate();
+
+// function init() {
+
+//     // CAMERAS
+
+//     camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.1, 100 );
+//     camera.position.set( 0, 0, 2.5 );
+
+//     // SCENE
+
+//     scene = new THREE.Scene();
+
+//     // Textures
+
+//     const loader = new THREE.CubeTextureLoader();
+//     loader.setPath( 'textures/cube/Bridge2/' );
+
+//     textureCube = loader.load( [ 'posx.jpg', 'negx.jpg', 'posy.jpg', 'negy.jpg', 'posz.jpg', 'negz.jpg' ] );
+
+//     const textureLoader = new THREE.TextureLoader();
+
+//     textureEquirec = textureLoader.load( 'textures/2294472375_24a3b8ef46_o.jpg' );
+//     textureEquirec.mapping = THREE.EquirectangularReflectionMapping;
+//     textureEquirec.colorSpace = THREE.SRGBColorSpace;
+
+//     scene.background = textureCube;
+
+
+//     renderer = new THREE.WebGLRenderer();
+//     renderer.setPixelRatio( window.devicePixelRatio );
+//     renderer.setSize( window.innerWidth, window.innerHeight );
+//     document.body.appendChild( renderer.domElement );
+
+//     //
+
+//     controls = new OrbitControls( camera, renderer.domElement );
+//     controls.minDistance = 1.5;
+//     controls.maxDistance = 6;
+
+
+//     const gui = new GUI();
+//     gui.add( params, 'Cube' );
+//     gui.add( params, 'Equirectangular' );
+//     gui.add( params, 'Refraction' ).onChange( function ( value ) {
+
+//         if ( value ) {
+
+//             textureEquirec.mapping = THREE.EquirectangularRefractionMapping;
+//             textureCube.mapping = THREE.CubeRefractionMapping;
+
+//         } else {
+
+//             textureEquirec.mapping = THREE.EquirectangularReflectionMapping;
+//             textureCube.mapping = THREE.CubeReflectionMapping;
+
+//         }
+
+//         sphereMaterial.needsUpdate = true;
+
+//     } );
+//     gui.open();
+
+//     window.addEventListener( 'resize', onWindowResize );
+
+// }
+
+// function onWindowResize() {
+
+//     camera.aspect = window.innerWidth / window.innerHeight;
+//     camera.updateProjectionMatrix();
+
+//     renderer.setSize( window.innerWidth, window.innerHeight );
+
+// }
+
+// function animate() {
+
+//     requestAnimationFrame( animate );
+
+//     render();
+
+// }
+
+// function render() {
+
+//     camera.lookAt( scene.position );
+//     renderer.render( scene, camera );
+
+// }
+
 import * as THREE from 'three';
+//import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-// setup scene
-const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x0047ab, 0.1, 50);
+let camera, controls, scene, renderer;
+let textureEquirec, textureCube;
+let sphereMesh, sphereMaterial;
 
-//#region ====================particles
-const buffer = new THREE.BufferGeometry();
-const vertices = [];
-const size = 2000;
-const wallpaper = document.querySelector(".three_bg");
+const container = document.querySelector(".three_bg");
 
-for (let i = 0; i<1000; i++){
-    const x  = (Math.random() * size + Math.random() * size)/2 - size/2;
-    const y  = (Math.random() * size + Math.random() * size)/2 - size/2;
-    const z  = (Math.random() * size + Math.random() * size)/2 - size/2;
+init();
+animate();
 
-    vertices.push(x,y,z);
-}
+function init() {
 
-// setup camera
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-camera.position.z = 5;
+	scene = new THREE.Scene();
 
-buffer.setAttribute(
-    "position",
-    new THREE.Float32BufferAttribute(vertices, 3)
-);
+    // Textures
 
-const prtclsMaterial = new THREE.PointsMaterial({
-    size: 5,
-    color: 0Xffffff,
-});
+    const loader = new THREE.CubeTextureLoader();
+    loader.setPath( 'static/textures/' );
 
-const particles = new THREE.Points(buffer, prtclsMaterial);
-scene.add(particles);
+    textureCube = loader.load( [ 'posx.jpg', 'negx.jpg', 'posy.jpg', 'negy.jpg', 'posz.jpg', 'negz.jpg' ] );
+
+    const textureLoader = new THREE.TextureLoader();
+
+    textureEquirec = textureLoader.load( 'static/2294472375_24a3b8ef46_o.jpg' );
+    textureEquirec.mapping = THREE.EquirectangularReflectionMapping;
+    textureEquirec.colorSpace = THREE.SRGBColorSpace;
+
+    const params = {
+        Cube: function () {
+
+            scene.background = textureCube;
+
+            sphereMaterial.envMap = textureCube;
+            sphereMaterial.needsUpdate = true;
+
+        },
+        Equirectangular: function () {
+
+            scene.background = textureEquirec;
+
+            sphereMaterial.envMap = textureEquirec;
+            sphereMaterial.needsUpdate = true;
+
+        },
+        Refraction: false
+    };
+
+    scene.background = textureCube;
+	
+	renderer = new THREE.WebGLRenderer( { antialias: true } );
+	renderer.setPixelRatio( window.devicePixelRatio );
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	container.appendChild( renderer.domElement );
+
+	camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 1000 );
+	camera.position.set( 400, 200, 0 );
+
+	// controls
+
+controls = new OrbitControls( camera, renderer.domElement );
+
+controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
+controls.dampingFactor = 0.05;
+
+controls.screenSpacePanning = false;
+
+controls.minDistance = 100;
+controls.maxDistance = 500;
+
+//controls.maxPolarAngle = Math.PI / 2;
+
+//#region ========PIRAMIDES
+// const piramide = new THREE.ConeGeometry( 10, 30, 4, 1 );
+// const material = new THREE.MeshPhongMaterial( { color: 0xffffff, flatShading: true } );
+
+// for ( let i = 0; i < 500; i ++ ) {
+
+//     const mesh = new THREE.Mesh( piramide, material );
+//     mesh.position.x = Math.random() * 1600 - 800;
+//     mesh.position.y = 0;
+//     mesh.position.z = Math.random() * 1600 - 800;
+//     mesh.updateMatrix();
+//     mesh.matrixAutoUpdate = false;
+//     scene.add( mesh );
+
+// }
 //#endregion
 
-let clock = new THREE.Clock();
+// lights
 
-// setup renderer
-const renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth, window.innerHeight);
+const dirLight1 = new THREE.DirectionalLight( 0xffffff, 3 );
+dirLight1.position.set( 1, 1, 1 );
+scene.add( dirLight1 );
 
-// add renderer to body
-wallpaper.appendChild(renderer.domElement);
+const dirLight2 = new THREE.DirectionalLight( 0x002288, 3 );
+dirLight2.position.set( - 1, - 1, - 1 );
+scene.add( dirLight2 );
 
+const ambientLight = new THREE.AmbientLight( 0x555555 );
+scene.add( ambientLight );
 
-// animation function
+//
+
+	window.addEventListener( 'resize', onWindowResize );
+
+}
+
+function onWindowResize() {
+
+	camera.aspect = window.innerWidth / window.innerHeight;
+	camera.updateProjectionMatrix();
+
+	renderer.setSize( window.innerWidth, window.innerHeight );
+
+}
+
 function animate() {
 
-    requestAnimationFrame(animate);
+	requestAnimationFrame( animate );
 
-    const delta = clock.getDelta();
+	controls.update(); // only required if controls.enableDamping = true, or if controls.autoRotate = true
 
-    //======= animate particles
+	render();
 
-    particles.rotation.z += delta * 0.1;	
+}
 
-    // render the scene with camera
-    renderer.render(scene, camera);
-};
+function render() {
 
-// start animation
-animate();
+	renderer.render( scene, camera );
+
+}
