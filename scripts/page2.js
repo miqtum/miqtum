@@ -1,102 +1,5 @@
-// import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-
-// let controls, camera, scene, renderer;
-
-
-// init();
-// animate();
-
-// function init() {
-
-//     // CAMERAS
-
-//     camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.1, 100 );
-//     camera.position.set( 0, 0, 2.5 );
-
-//     // SCENE
-
-//     scene = new THREE.Scene();
-
-//     // Textures
-
-//     const loader = new THREE.CubeTextureLoader();
-//     loader.setPath( 'textures/cube/Bridge2/' );
-
-//     textureCube = loader.load( [ 'posx.jpg', 'negx.jpg', 'posy.jpg', 'negy.jpg', 'posz.jpg', 'negz.jpg' ] );
-
-//     const textureLoader = new THREE.TextureLoader();
-
-//     textureEquirec = textureLoader.load( 'textures/2294472375_24a3b8ef46_o.jpg' );
-//     textureEquirec.mapping = THREE.EquirectangularReflectionMapping;
-//     textureEquirec.colorSpace = THREE.SRGBColorSpace;
-
-//     scene.background = textureCube;
-
-
-//     renderer = new THREE.WebGLRenderer();
-//     renderer.setPixelRatio( window.devicePixelRatio );
-//     renderer.setSize( window.innerWidth, window.innerHeight );
-//     document.body.appendChild( renderer.domElement );
-
-//     //
-
-//     controls = new OrbitControls( camera, renderer.domElement );
-//     controls.minDistance = 1.5;
-//     controls.maxDistance = 6;
-
-
-//     const gui = new GUI();
-//     gui.add( params, 'Cube' );
-//     gui.add( params, 'Equirectangular' );
-//     gui.add( params, 'Refraction' ).onChange( function ( value ) {
-
-//         if ( value ) {
-
-//             textureEquirec.mapping = THREE.EquirectangularRefractionMapping;
-//             textureCube.mapping = THREE.CubeRefractionMapping;
-
-//         } else {
-
-//             textureEquirec.mapping = THREE.EquirectangularReflectionMapping;
-//             textureCube.mapping = THREE.CubeReflectionMapping;
-
-//         }
-
-//         sphereMaterial.needsUpdate = true;
-
-//     } );
-//     gui.open();
-
-//     window.addEventListener( 'resize', onWindowResize );
-
-// }
-
-// function onWindowResize() {
-
-//     camera.aspect = window.innerWidth / window.innerHeight;
-//     camera.updateProjectionMatrix();
-
-//     renderer.setSize( window.innerWidth, window.innerHeight );
-
-// }
-
-// function animate() {
-
-//     requestAnimationFrame( animate );
-
-//     render();
-
-// }
-
-// function render() {
-
-//     camera.lookAt( scene.position );
-//     renderer.render( scene, camera );
-
-// }
-
 import * as THREE from 'three';
-//import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 let camera, controls, scene, renderer;
@@ -112,21 +15,22 @@ function init() {
 
 	scene = new THREE.Scene();
 
-    // Textures
+//#region ================ Textures
 
-    const loader = new THREE.CubeTextureLoader();
-    loader.setPath( 'static/textures/' );
+const loader = new THREE.CubeTextureLoader();
+loader.setPath( 'static/textures/' );
 
-    textureCube = loader.load( [ 'posx.jpg', 'negx.jpg', 'posy.jpg', 'negy.jpg', 'posz.jpg', 'negz.jpg' ] );
+textureCube = loader.load( [ 'posx.jpg', 'negx.jpg', 'posy.jpg', 'negy.jpg', 'posz.jpg', 'negz.jpg' ] );
 
-    const textureLoader = new THREE.TextureLoader();
+const textureLoader = new THREE.TextureLoader();
 
-    textureEquirec = textureLoader.load( 'static/2294472375_24a3b8ef46_o.jpg' );
-    textureEquirec.mapping = THREE.EquirectangularReflectionMapping;
-    textureEquirec.colorSpace = THREE.SRGBColorSpace;
+textureEquirec = textureLoader.load( 'static/2294472375_24a3b8ef46_o.jpg' );
+textureEquirec.mapping = THREE.EquirectangularReflectionMapping;
+textureEquirec.colorSpace = THREE.SRGBColorSpace;
+//#endregion
 
     const params = {
-        Cube: function () {
+        SeverskayaMost: function () {
 
             scene.background = textureCube;
 
@@ -134,7 +38,7 @@ function init() {
             sphereMaterial.needsUpdate = true;
 
         },
-        Equirectangular: function () {
+        MonBureau: function () {
 
             scene.background = textureEquirec;
 
@@ -152,10 +56,12 @@ function init() {
 	renderer.setSize( window.innerWidth, window.innerHeight );
 	container.appendChild( renderer.domElement );
 
-	camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 1000 );
-	camera.position.set( 400, 200, 0 );
+	camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.1, 100 );
+	camera.position.set( 0, 0, 2.5 );
 
 	// controls
+
+//#region CONTROLS 
 
 controls = new OrbitControls( camera, renderer.domElement );
 
@@ -164,10 +70,12 @@ controls.dampingFactor = 0.05;
 
 controls.screenSpacePanning = false;
 
-controls.minDistance = 100;
-controls.maxDistance = 500;
+controls.minDistance = 1.5;
+controls.maxDistance = 6;
 
 //controls.maxPolarAngle = Math.PI / 2;
+
+//#endregion
 
 //#region ========PIRAMIDES
 // const piramide = new THREE.ConeGeometry( 10, 30, 4, 1 );
@@ -186,7 +94,7 @@ controls.maxDistance = 500;
 // }
 //#endregion
 
-// lights
+//#region LIGHTS 
 
 const dirLight1 = new THREE.DirectionalLight( 0xffffff, 3 );
 dirLight1.position.set( 1, 1, 1 );
@@ -199,9 +107,31 @@ scene.add( dirLight2 );
 const ambientLight = new THREE.AmbientLight( 0x555555 );
 scene.add( ambientLight );
 
-//
+//#endregion
 
-	window.addEventListener( 'resize', onWindowResize );
+const gui = new GUI();
+gui.add( params, 'SeverskayaMost' );
+gui.add( params, 'MonBureau' );
+// gui.add( params, 'Refraction' ).onChange( function ( value ) {
+
+//     if ( value ) {
+
+//         textureEquirec.mapping = THREE.EquirectangularRefractionMapping;
+//         textureCube.mapping = THREE.CubeRefractionMapping;
+
+//     } else {
+
+//         textureEquirec.mapping = THREE.EquirectangularReflectionMapping;
+//         textureCube.mapping = THREE.CubeReflectionMapping;
+
+//     }
+
+// sphereMaterial.needsUpdate = true;
+
+// } );
+gui.open();
+
+window.addEventListener( 'resize', onWindowResize );
 
 }
 
