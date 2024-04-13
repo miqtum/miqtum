@@ -59,19 +59,21 @@ renderer.setPixelRatio( window.devicePixelRatio );
 renderer.setSize( window.innerWidth, window.innerHeight );
 document.body.appendChild( renderer.domElement );
 
-new RGBELoader()
-    .setPath( 'equirectangular/' )
-    .load( 'SPACE.hdr', function ( texture ) {
+// new RGBELoader()
+//     .setPath( 'equirectangular/' )
+//     .load( 'SPACE.hdr', function ( texture ) {
 
-        texture.mapping = THREE.EquirectangularReflectionMapping ;
+//         texture.mapping = THREE.EquirectangularReflectionMapping ;
         
 
-        scene.background = texture;
-        scene.environment = texture;            
+//         scene.background = texture;
+//         scene.environment = texture;            
 
         
-    } );
+//     } );
   
+//#region controls 
+
 const controls = new OrbitControls( camera, renderer.domElement );
 controls.enableDamping = true; 
 controls.dampingFactor = .05;
@@ -79,21 +81,36 @@ controls.minDistance = 5;
 controls.maxDistance = 5;
 controls.target.set( 0, 0, - 0.2 );
 controls.enablePan = false;
+
 //controls.maxAzimuthAngle = THREE.MathUtils.degToRad(90);
 controls.minAzimuthAngle = THREE.MathUtils.degToRad(220);
 controls.minPolarAngle = THREE.MathUtils.degToRad(0);
 controls.autoRotate = true;
 controls.autoRotateSpeed = 0.5;
 controls.update(); 
+
+//#endregion
  
-const loader = new GLTFLoader().setPath( 'models/');
-loader.load('SCOOF.glb', function ( gltf ) {
+const scoof = new GLTFLoader().setPath( 'models/');
+scoof.load('SCOOF.glb', function ( gltf ) {
 
     scene.add( gltf.scene );
 
     render();
 
 } ); 
+
+const glock = new GLTFLoader().setPath('models/')
+glock.load('GLOCK.glb', function(gltf){
+    //glock.position.set(0, 0, 0);
+    
+    const model = gltf.scene;
+    model.position.set(0, 1, .5);
+    scene.add( gltf.scene );
+
+    render();
+})
+
 
 window.addEventListener( 'resize', onWindowResize );
 
@@ -112,7 +129,7 @@ function animate() {
 
     const delta = clock.getDelta();
 
-	controls.update(delta); // only required if controls.enableDamping = true, or if controls.autoRotate = true
+	controls.update(delta); 
 
 	render();
 

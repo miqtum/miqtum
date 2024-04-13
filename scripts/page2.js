@@ -24,7 +24,7 @@ textureCube = loader.load( [ 'posx.jpg', 'negx.jpg', 'posy.jpg', 'negy.jpg', 'po
 
 const textureLoader = new THREE.TextureLoader();
 
-textureEquirec = textureLoader.load( 'static/2294472375_24a3b8ef46_o.jpg' );
+textureEquirec = textureLoader.load( 'static/bureau.jpg' );
 textureEquirec.mapping = THREE.EquirectangularReflectionMapping;
 textureEquirec.colorSpace = THREE.SRGBColorSpace;
 //#endregion
