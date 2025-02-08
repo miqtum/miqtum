@@ -5,7 +5,11 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 
 let camera, scene, renderer;
-let clock = new THREE.Clock();
+
+let mouseX = 0;
+let mouseY = 0;
+let prevMouseX = 0;
+let prevMouseY = 0;
 
 scene = new THREE.Scene();
 
@@ -82,11 +86,55 @@ controls.maxDistance = 5;
 controls.target.set( 0, 0, - 0.2 );
 controls.enablePan = false;
 
+
+// Устанавливаем начальную скорость вращения и включаем автоматическое вращение
+controls.autoRotateSpeed = 0.5; // Выбираем любое начальное значение
+controls.autoRotate = true;
+
+let isMouseDown = false;
+let lastSpeed = controls.autoRotateSpeed;
+
+// Устанавливаем минимальные и максимальные скорости для вращения в каждую сторону
+const minSpeedPositive = 0.5; // Минимальная скорость вращения по часовой стрелке
+const maxSpeedPositive = 2.0; // Максимальная скорость вращения по часовой стрелке
+const minSpeedNegative = -0.5; // Минимальная скорость вращения против часовой стрелки
+const maxSpeedNegative = -2.0; // Максимальная скорость вращения против часовой стрелки
+
+document.addEventListener('mousedown', () => {
+    isMouseDown = true;
+});
+
+document.addEventListener('mouseup', () => {
+    isMouseDown = false;
+    controls.autoRotateSpeed = lastSpeed;
+});
+
+document.addEventListener('mousemove', (event) => {
+    if (isMouseDown) {
+        const deltaX = event.movementX;
+        let newSpeed = deltaX * 0.1;
+
+        // Ограничиваем скорость в зависимости от направления
+        if (newSpeed > 0) {
+            newSpeed = Math.max(minSpeedPositive, Math.min(maxSpeedPositive, newSpeed));
+        } else if (newSpeed < 0) {
+            newSpeed = Math.min(minSpeedNegative, Math.max(maxSpeedNegative, newSpeed));
+        }
+        else if (newSpeed == 0) {
+            newSpeed = 0.5;
+        }
+
+
+        lastSpeed = newSpeed;
+        controls.autoRotateSpeed = lastSpeed;
+        controls.autoRotate = true;
+    }
+});
+
+
 //controls.maxAzimuthAngle = THREE.MathUtils.degToRad(90);
 controls.minAzimuthAngle = THREE.MathUtils.degToRad(220);
 controls.minPolarAngle = THREE.MathUtils.degToRad(0);
-controls.autoRotate = true;
-controls.autoRotateSpeed = 0.5;
 controls.update(); 
 
 //#endregion
@@ -123,31 +171,37 @@ function onWindowResize() {
 
 }
 
-function animate() {
+// function animate() {
 
-	requestAnimationFrame( animate );
+// 	requestAnimationFrame( animate );
 
-    const delta = clock.getDelta();
+//     const delta = clock.getDelta();
 
-	controls.update(delta); 
+// 	controls.update(); 
 
-	render();
+// 	render();
 
-}
+// }
 
 function render() {
 
     renderer.render( scene, camera );
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 10;    
-    // renderer.setPixelRatio( window.devicePixelRatio );
-    // renderer.setSize( window.innerWidth, window.innerHeight );
-    // const canvas = renderer.domElement;
-    // camera.aspect = canvas.clientWidth / canvas.clientHeight;
-    // camera.updateProjectionMatrix();
+    renderer.toneMappingExposure = 10; 
 
 }
 
-animate();
+let prevTime = performance.now();
 
-		
+function animate(time) {
+    requestAnimationFrame(animate);
+
+    const delta = (time - prevTime) / 1000;
+    prevTime = time;
+
+    controls.update();
+
+    render();
+}
+
+animate(prevTime);
