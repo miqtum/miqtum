@@ -3,25 +3,233 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>project 7</title>
-    <link rel="stylesheet" href="styles.css">   
-    <script type="importmap">
-        {
-          "imports": {
-            "three": "https://unpkg.com/three@0.158.0/build/three.module.js",
-            "three/addons/": "https://unpkg.com/three@0.158.0/examples/jsm/"
-          }
+    <title>Interactive 3D Cube</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #111;
+            font-family: 'Montserrat', sans-serif;
+            height: 100vh;
+            width: 100vw;
         }
-    </script>
+        
+        /* Layer system */
+        .layer-0 {
+            z-index: 0;
+        }
+        .layer-1 {
+            z-index: 1;
+        }
+        .layer-2 {
+            z-index: 2;
+        }
+        
+        #canvas-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px;
+            height: 400px;
+        }
+        
+        .title-container {
+            position: fixed;
+            top: 10%;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            padding: 0 20px;
+            box-sizing: border-box;
+            max-width: 800px;
+            min-width: 400px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .slider-container {
+            position: relative; 
+            top: calc(50% + 250px); /* Position below canvas */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            margin-top: 20px;
+        }
+        
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 10px;
+            border-radius: 5px;
+            background: linear-gradient(to right, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);
+            outline: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            border: 2px solid #333;
+        }
+        
+        .title-text {
+            font-size: 80px;
+            line-height: 1;
+            color: white;
+            font-weight: 900;
+            text-transform: uppercase;
+            display: inline-block;
+            white-space: normal;
+            word-wrap: break-word;
+            max-width: 100%;
+        }
+        
+        /* Computer-style text in canvas */
+        .canvas-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Courier New', monospace;
+            color: #00ff00;
+            font-size: 24px;
+            text-align: center;
+            pointer-events: none;
+            width: 100%;
+        }
+    </style>
 </head>
-  <body>   
-    <div class ="content">
-      <div class ="buttons-wrapper">
-        <button onclick="document.location='index.html'">back</button>      
-      </div>    
-      <div class = "three_bg">      
-        <script type="module" src="scripts/page7.js"></script>
-      </div>        
-    </div>    
-  </body>
+<body>
+    <div class="title-container layer-2">
+        <div class="title-text">ARE YOU OK?</div>
+    </div>
+
+    <div id="canvas-container" class="layer-0">
+        <div class="canvas-text">I'm</div>
+    </div>
+
+    <div class="slider-container layer-1" id="sliderContainer">
+        <input type="range" min="0" max="360" value="0" class="slider" id="hueSlider">
+    </div>
+
+    <script>
+        // Initialize Three.js scene
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x111111); // Matching background color
+        const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        
+        renderer.setSize(400, 400);
+        container.appendChild(renderer.domElement);
+
+        // Create texture for displacement
+        const textureLoader = new THREE.TextureLoader();
+        const displacementMap = textureLoader.load('https://threejs.org/examples/textures/terrain/waternormals.jpg');
+        displacementMap.wrapS = displacementMap.wrapT = THREE.RepeatWrapping;
+        
+        // Create cube with initial material
+        const geometry = new THREE.BoxGeometry(2, 2, 2, 64, 64, 64);
+        const material = new THREE.MeshStandardMaterial({ 
+            color: 0xffffff,
+            roughness: 0.3,
+            metalness: 0.7,
+            displacementMap: displacementMap,
+            displacementScale: 0.1
+        });
+        const cube = new THREE.Mesh(geometry, material);
+        scene.add(cube);
+
+        // Add lights
+        const ambientLight = new THREE.AmbientLight(0x404040);
+        scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        directionalLight.position.set(1, 1, 1);
+        scene.add(directionalLight);
+
+        // Position camera
+        camera.position.z = 5;
+
+        // Mouse movement variables
+        let targetRotationX = 0;
+        let targetRotationY = 0;
+        let currentRotationX = 0;
+        let currentRotationY = 0;
+        const dampingFactor = 0.1;
+
+        // Handle mouse movement
+        document.addEventListener('mousemove', (event) => {
+            targetRotationX = (event.clientY / window.innerHeight - 0.5) * Math.PI;
+            targetRotationY = (event.clientX / window.innerWidth - 0.5) * Math.PI;
+        });
+
+        // Color slider
+        const hueSlider = document.getElementById('hueSlider');
+        hueSlider.addEventListener('input', (event) => {
+            const hue = parseInt(event.target.value) / 360;
+            material.color.setHSL(hue, 0.8, 0.6);
+            // Also change displacement intensity based on hue
+            material.displacementScale = 0.1 + (hue * 0.5);
+        });
+
+        // Function to update slider position based on title container
+        function updateSliderPosition() {
+            const titleContainer = document.querySelector('.title-container');
+            const sliderContainer = document.getElementById('sliderContainer');
+            
+            // Get title container height and position
+            const titleRect = titleContainer.getBoundingClientRect();
+            const titleBottom = titleRect.bottom;
+            
+            // Position slider below canvas (canvas is centered)
+            sliderContainer.style.top = `calc(50% + 250px)`;
+        }
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Smooth rotation with damping
+            currentRotationX += (targetRotationX - currentRotationX) * dampingFactor;
+            currentRotationY += (targetRotationY - currentRotationY) * dampingFactor;
+            
+            cube.rotation.x = currentRotationX;
+            cube.rotation.y = currentRotationY;
+            
+            // Animate displacement map
+            displacementMap.offset.x += 0.001;
+            displacementMap.offset.y += 0.001;
+            
+            renderer.render(scene, camera);
+        }
+        
+        animate();
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            renderer.setSize(width, height);
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            
+            // Update slider position on resize
+            updateSliderPosition();
+        });
+
+        // Initial slider position setup
+        updateSliderPosition();
+    </script>
+</body>
 </html>

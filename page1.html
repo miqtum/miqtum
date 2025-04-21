@@ -3,24 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>project 1</title>
-    <link rel="stylesheet" href="styles.css">   
-    <script type="importmap">
-      {
-        "imports": {
-          "three": "https://unpkg.com/three@0.158.0/build/three.module.js",
-          "three/addons/": "https://unpkg.com/three@0.158.0/examples/jsm/"
-        }
-      }
-    </script>
+    <title>3D Model Rotation on Scroll</title>
+    <!-- Подключение CSS-файла -->
+    <link rel="stylesheet" href="styles.css">
 </head>
-  <body> 
-        <div class ="buttons-wrapper">
-      <button onclick="document.location='index.html'">back</button>      
-    </div>    
-    <div class = "three_bg">      
-      <script type="module" src="scripts/scoof.js"></script>
-    </div>        
-       
-  </body>
+<body class="body">
+    <!-- Контейнер для вашего текста или других элементов -->
+    <div id="content" class="content">
+        <h1 class="title">Скроллите вниз, чтобы вращать модель</h1>
+        <p class="paragraph">Ваш контент здесь...</p>
+    </div>
+
+    <!-- Подключение Three.js и GLTFLoader -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/GLTFLoader.js"></script>
+
+    <!-- Подключение собственного скрипта -->
+    <script src="page7.js"></script>
+</body>
 </html>
