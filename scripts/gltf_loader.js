@@ -5,101 +5,147 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 
 let camera, scene, renderer;
+let clock = new THREE.Clock();
 
-init();
-render();
+scene = new THREE.Scene();
 
-function init() {
+//const wallpaper = document.querySelector(".three_bg");
 
-    const container = document.createElement( 'div' );
-    document.body.appendChild( container );
 
-    camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.25, 20 );
-    camera.position.set( 0, 2, 5 );
+const directionalLight = new THREE.DirectionalLight(0xffffff, .4);
+directionalLight.position.set(100, 100, 100);
+scene.add(directionalLight);
 
-    scene = new THREE.Scene();
+const ambientLight = new THREE.AmbientLight(0x404040, 1);
+scene.add(ambientLight); 
 
-    new RGBELoader()
-        .setPath( 'equirectangular/' )
-        .load( 'SPACE.hdr', function ( texture ) {
+scene.fog = new THREE.FogExp2( 'MAGENTA', .08, 50 );
 
-            texture.mapping = THREE.EquirectangularReflectionMapping;
+//#region ==============particles
+const buffer = new THREE.BufferGeometry();
+const vertices = [];
+const size = 33;
 
-            scene.background = texture;
-            scene.environment = texture;
+for (let i = 0; i<999; i++){
+    const x  = (Math.random() * size + Math.random() * size)/2 - size/2;
+    const y  = (Math.random() * size + Math.random() * size)/2 - size/2;
+    const z  = (Math.random() * size + Math.random() * size)/2 - size/2;
 
-            render();
-
-            // model
-
-            const loader = new GLTFLoader().setPath( 'models/');
-            loader.load('SCOOF.glb', async function ( gltf ) {
-
-                scene.add( gltf.scene );
-
-                render();
-
-            } );
-
-        } );
-
-    renderer = new THREE.WebGLRenderer( { antialias: true } );
-    renderer.setPixelRatio( window.devicePixelRatio );
-    renderer.setSize( window.innerWidth, window.innerHeight );
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 11;
-    container.appendChild( renderer.domElement );
-
-    const controls = new OrbitControls( camera, renderer.domElement );
-    controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
-	controls.dampingFactor = .05;
-    controls.addEventListener( 'change', render ); // use if there is no animation loop
-    controls.minDistance = 5;
-    controls.maxDistance = 5;
-    controls.target.set( 0, 0, 0 );
-    controls.enablePan = false;
-    //controls.maxAzimuthAngle = THREE.MathUtils.degToRad(90);
-    // controls.minAzimuthAngle = THREE.MathUtils.degToRad(220);
-    // controls.minPolarAngle = THREE.MathUtils.degToRad(0);
-    controls.update();
-    controls.
-
-    window.addEventListener( 'resize', onWindowResize );
-
+    vertices.push(x,y,z);
 }
 
-function onWindowResize() {
+camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.25, 20 );
+camera.position.set( 0, 5, 10 );
 
-    camera.aspect = window.outerWidth / window.outerHeight;
-    camera.updateProjectionMatrix();
+buffer.setAttribute(
+    "position",
+    new THREE.Float32BufferAttribute(vertices, 3)
+);
 
-    renderer.setSize( window.outerWidth, window.outerHeight );
+const prtclsMaterial = new THREE.PointsMaterial({
+    size: .05,
+    color: 0Xffffff
+});
+
+const particles = new THREE.Points(buffer, prtclsMaterial);
+
+scene.add(particles);
+
+//#endregion
+
+    
+renderer = new THREE.WebGLRenderer( { antialias: true } );
+renderer.setPixelRatio( window.devicePixelRatio );
+renderer.setSize( window.innerWidth, window.innerHeight );
+document.body.appendChild( renderer.domElement );
+
+// new RGBELoader()
+//     .setPath( 'equirectangular/' )
+//     .load( 'SPACE.hdr', function ( texture ) {
+
+//         texture.mapping = THREE.EquirectangularReflectionMapping ;
+        
+
+//         scene.background = texture;
+//         scene.environment = texture;            
+
+        
+//     } );
+  
+//#region controls 
+
+const controls = new OrbitControls( camera, renderer.domElement );
+controls.enableDamping = true; 
+controls.dampingFactor = .05;
+controls.minDistance = 5;
+controls.maxDistance = 5;
+controls.target.set( 0, 0, - 0.2 );
+controls.enablePan = false;
+
+//controls.maxAzimuthAngle = THREE.MathUtils.degToRad(90);
+controls.minAzimuthAngle = THREE.MathUtils.degToRad(220);
+controls.minPolarAngle = THREE.MathUtils.degToRad(0);
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.5;
+controls.update(); 
+
+//#endregion
+ 
+const scoof = new GLTFLoader().setPath( 'models/');
+scoof.load('SCOOF.glb', function ( gltf ) {
+
+    scene.add( gltf.scene );
 
     render();
 
+} ); 
+
+const glock = new GLTFLoader().setPath('models/')
+glock.load('GLOCK.glb', function(gltf){
+    //glock.position.set(0, 0, 0);
+    
+    const model = gltf.scene;
+    model.position.set(0, 1, .5);
+    scene.add( gltf.scene );
+
+    render();
+})
+
+
+window.addEventListener( 'resize', onWindowResize );
+
+function onWindowResize() {
+
+    camera.aspect = window.innerWidth / window.innerHeight;
+	camera.updateProjectionMatrix();
+
+	renderer.setSize( window.innerWidth, window.innerHeight );
+
 }
-    // Создаем источник направленного света (DirectionalLight)
-    const pointLight = new THREE.PointLight(0xff0f554fe, 400, 11);
-    pointLight.position.set(0, 0, 0);
-    scene.add(pointLight);
 
-    const sphereSize = 400;
-    const pointLightHelper = new THREE.PointLightHelper( pointLight, sphereSize );
-    scene.add( pointLightHelper );
+function animate() {
 
-    // Создаем источник окружающего света (AmbientLight)
-    const ambientLight = new THREE.AmbientLight(0x404040, 55);
-    scene.add(ambientLight);
+	requestAnimationFrame( animate );
 
-//
+    const delta = clock.getDelta();
+
+	controls.update(delta); 
+
+	render();
+
+}
 
 function render() {
 
     renderer.render( scene, camera );
-    const canvas = renderer.domElement;
-    camera.aspect = canvas.clientWidth / canvas.clientHeight;
-    camera.updateProjectionMatrix();
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 10;    
+    // renderer.setPixelRatio( window.devicePixelRatio );
+    // renderer.setSize( window.innerWidth, window.innerHeight );
+    // const canvas = renderer.domElement;
+    // camera.aspect = canvas.clientWidth / canvas.clientHeight;
+    // camera.updateProjectionMatrix();
 
 }
 
-		
+animate();

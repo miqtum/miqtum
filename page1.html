@@ -1,24 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Model Rotation on Scroll</title>
-    <!-- Подключение CSS-файла -->
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body class="body">
-    <!-- Контейнер для вашего текста или других элементов -->
-    <!-- <div id="content" class="content">
-        <h1 class="title">Скроллите вниз, чтобы вращать модель</h1>
-        <p class="paragraph">Ваш контент здесь...</p>
-    </div> -->
-
-    <!-- Подключение Three.js и GLTFLoader -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/GLTFLoader.js"></script>
-
-    <!-- Подключение собственного скрипта -->
-    <script type="module" src="scripts/page2.js"></script>
-</body>
+	<head>
+		<meta charset="utf-8">
+		<title>project 3</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link rel="stylesheet" href="styles.css">        
+    <script type="importmap">
+        {
+          "imports": {
+            "three": "https://unpkg.com/three@0.158.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.158.0/examples/jsm/"
+          }
+        }
+    </script>
+	</head>
+	<body>
+    
+    <div class="buttons-wrapper">
+      <button onclick="document.location='index.html'">back</button>
+    </div>      
+    <script type="module" src="scripts/gltf_loader.js"></script> 
+	</body>
 </html>
