@@ -59,20 +59,36 @@ renderer.setPixelRatio( window.devicePixelRatio );
 renderer.setSize( window.innerWidth, window.innerHeight );
 document.body.appendChild( renderer.domElement );
 
-// new RGBELoader()
-//     .setPath( 'equirectangular/' )
-//     .load( 'SPACE.hdr', function ( texture ) {
-
-//         texture.mapping = THREE.EquirectangularReflectionMapping ;
-        
-
-//         scene.background = texture;
-//         scene.environment = texture;            
-
-        
-//     } );
   
 //#region controls 
+
+
+let isMouseDown = false;
+let lastSpeed = 0;
+
+document.addEventListener('mousedown', () => {
+    isMouseDown = true;
+});
+
+document.addEventListener('mouseup', () => {
+    isMouseDown = false;
+    controls.autoRotateSpeed = lastSpeed;  // Сохраняем последнее установленное значение скорости
+});
+
+document.addEventListener('mousemove', (event) => {
+    if (isMouseDown) {
+        // Обновляем текущую позицию мыши
+        const deltaX = event.movementX; // Используем изменение позиции мыши с события
+        
+        // Обновляем направление и скорость вращения в зависимости от положения мыши
+        lastSpeed = deltaX * 0.01;  // Устанавливаем скорость вращения
+        controls.autoRotateSpeed = lastSpeed;
+        controls.autoRotate = true; // Включаем автоматическое вращение
+    }
+});
+
+// Вызовите controls.update() и animate() как обычно
+
 
 const controls = new OrbitControls( camera, renderer.domElement );
 controls.enableDamping = true; 
@@ -88,6 +104,7 @@ controls.minPolarAngle = THREE.MathUtils.degToRad(0);
 controls.autoRotate = true;
 controls.autoRotateSpeed = 0.5;
 controls.update(); 
+
 
 //#endregion
  
@@ -123,29 +140,36 @@ function onWindowResize() {
 
 }
 
-function animate() {
+function animate(time) {
+    requestAnimationFrame(animate);
 
-	requestAnimationFrame( animate );
+    const delta = (time - prevTime) / 1000;
+    prevTime = time;
 
-    const delta = clock.getDelta();
+    // Здесь просто вызовите update без аргументов
+    controls.update();
 
-	controls.update(delta); 
-
-	render();
-
+    render();
 }
+
 
 function render() {
 
     renderer.render( scene, camera );
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 10;    
-    // renderer.setPixelRatio( window.devicePixelRatio );
-    // renderer.setSize( window.innerWidth, window.innerHeight );
-    // const canvas = renderer.domElement;
-    // camera.aspect = canvas.clientWidth / canvas.clientHeight;
-    // camera.updateProjectionMatrix();
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    const canvas = renderer.domElement;
+    camera.aspect = canvas.clientWidth / canvas.clientHeight;
+    camera.updateProjectionMatrix();
 
 }
 
-animate();
+let prevTime = performance.now();
+
+
+animate(prevTime);
+
+
+// animate();
