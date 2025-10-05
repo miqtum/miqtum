@@ -5,16 +5,37 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 let camera, controls, scene, renderer;
 let textureEquirec;
 
+// состояние анимации камеры
+let camTween = null;
+
+// время для дельты
+let lastTime = performance.now();
+
 const container = document.querySelector('.three_bg');
 
 const TARGET_SIZE_DEFAULT = 1.0;
 
 const MODELS = [
-  { url: '/scripts/miqtum/models/SCOOF.glb', pos: [ 0, 0, 8 ], rot: [0, 0, 0], size: 3 },
-  { url: '/scripts/miqtum/models/GLOCK.glb', pos: [-4, 0, -4], rot: [0, Math.PI * 0.5, 0], size: 1.0 },
+  { url: '/scripts/miqtum/models/SCOOF.glb', pos: [ 2, 0, -4], rot: [0, 0, 0], size: 3 },
+  { url: '/scripts/miqtum/models/SCOOF.glb', pos: [-4, 0, -4], rot: [0, Math.PI * 0.5, 0], size: 1.0 },
   { url: '/scripts/miqtum/models/SCOOF.glb', pos: [ 0, 1, -6], rot: [0, 0.25*Math.PI, 0], size: 0.8 },
   { url: '/scripts/miqtum/models/SCOOF.glb', pos: [ 4, -0.5, -5], rot: [0, -0.5*Math.PI, 0], size: 1.2 },
 ];
+
+// Настройки подлета к моделям
+const MODEL_VIEWS = [
+  { dir: [ 1.0,  0.3,  1.0], distFactor: 1.3, duration: 1.2 },
+  { dir: [-1.2,  0.4,  0.8], distFactor: 1.3, duration: 1.2 },
+  { dir: [ 0.6,  0.6,  1.2], distFactor: 1.4, duration: 1.3 },
+  { dir: [-0.8,  0.5,  1.0], distFactor: 1.3, duration: 1.2 },
+];
+
+// Скорости вращения моделей (радиан/сек). Можно задавать отрицательные для разнонаправленного вращения.
+const DEFAULT_MODEL_ROT_SPEED = 0.15;
+const MODEL_ROT_SPEEDS = [0.15, -0.12, 0.1, 0.13];
+
+// Хранилище загруженных моделей
+const loadedModels = [];
 
 const gltfLoader = new GLTFLoader();
 
@@ -49,10 +70,10 @@ function init() {
   controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.05;
-  controls.enablePan = false;   // блок панорамирования
-  controls.enableZoom = false;  // оставляем только вращение
+  controls.enablePan = false;   // без панорамирования
+  controls.enableZoom = false;  // только вращение
   controls.minDistance = 0.0;
-  controls.maxDistance = 10.0;
+  controls.maxDistance = 100.0;
   controls.target.set(0, 0, -1);
 
   const dir1 = new THREE.DirectionalLight(0xffffff, 3);
@@ -66,12 +87,27 @@ function init() {
   scene.add(new THREE.AmbientLight(0x555555));
 
   addModelsFromConfig(MODELS);
+  setupUI();
 
   window.addEventListener('resize', onWindowResize);
 }
 
+function setupUI() {
+  bindBtn('btn-home', () => flyToHome());
+  bindBtn('btn-m0',   () => flyToModel(0));
+  bindBtn('btn-m1',   () => flyToModel(1));
+  bindBtn('btn-m2',   () => flyToModel(2));
+  bindBtn('btn-m3',   () => flyToModel(3));
+}
+
+function bindBtn(id, handler) {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('click', handler);
+}
+
 async function addModelsFromConfig(list) {
-  for (const m of list) {
+  for (let i = 0; i < list.length; i++) {
+    const m = list[i];
     const obj = await loadAndPrepareModel(m.url, m.size ?? TARGET_SIZE_DEFAULT);
     if (!obj) continue;
 
@@ -87,6 +123,7 @@ async function addModelsFromConfig(list) {
     }
 
     scene.add(obj);
+    loadedModels[i] = obj; // сохраним ссылку
   }
 }
 
@@ -122,11 +159,123 @@ function centerAndNormalize(object3D, targetSize = 1.0) {
   box.getSize(size);
   box.getCenter(center);
 
-  object3D.position.sub(center);
+  object3D.position.sub(center); // центр в (0,0,0)
 
   const maxDim = Math.max(size.x, size.y, size.z) || 1;
   const scale = targetSize / maxDim;
   object3D.scale.setScalar(scale);
+}
+
+// Вычисление расстояния до камеры, чтобы уместить сферу радиуса r в кадре
+function getFitDistanceForRadius(r) {
+  const vFOV = THREE.MathUtils.degToRad(camera.fov);
+  const hFOV = 2 * Math.atan(Math.tan(vFOV / 2) * camera.aspect);
+  const distV = r / Math.tan(vFOV / 2);
+  const distH = r / Math.tan(hFOV / 2);
+  return Math.max(distV, distH);
+}
+
+// Получить центр и радиус модели (в мировых координатах)
+function getModelBounds(model) {
+  model.updateWorldMatrix(true, true);
+  const box = new THREE.Box3().setFromObject(model);
+  const center = new THREE.Vector3();
+  box.getCenter(center);
+  const sphere = box.getBoundingSphere(new THREE.Sphere());
+  const radius = sphere.radius || 1;
+  return { center, radius };
+}
+
+// Перелет к общей сцене
+function flyToHome() {
+  const objs = loadedModels.filter(Boolean);
+  if (objs.length === 0) return;
+
+  const box = new THREE.Box3();
+  objs.forEach(o => box.expandByObject(o));
+  const center = new THREE.Vector3();
+  box.getCenter(center);
+  const sphere = box.getBoundingSphere(new THREE.Sphere());
+  const r = sphere.radius || 2;
+
+  const baseDist = getFitDistanceForRadius(r);
+  const dist = baseDist * 1.3;
+  const dir = new THREE.Vector3(-1, 0.5, 2).normalize();
+  const pos = center.clone().add(dir.multiplyScalar(dist));
+
+  flyTo({ pos, target: center, duration: 1.4 });
+}
+
+// Перелет к конкретной модели по индексу
+function flyToModel(index) {
+  const model = loadedModels[index];
+  if (!model) return;
+
+  const { center, radius } = getModelBounds(model);
+
+  const conf = MODEL_VIEWS[index] || {};
+  const dirArr = conf.dir || [0, 0.5, 1];
+  const dir = new THREE.Vector3().fromArray(dirArr).normalize();
+
+  const baseDist = getFitDistanceForRadius(radius);
+  const dist = baseDist * (conf.distFactor ?? 1.3);
+
+  const pos = center.clone().add(dir.multiplyScalar(dist));
+  const duration = conf.duration ?? 1.2;
+
+  flyTo({ pos, target: center, duration });
+}
+
+// Универсальная функция перелета
+function flyTo(view) {
+  const toPos = view.pos instanceof THREE.Vector3 ? view.pos.clone() : new THREE.Vector3().fromArray(view.pos.toArray ? view.pos.toArray() : view.pos);
+  const toTgt = view.target instanceof THREE.Vector3 ? view.target.clone() : new THREE.Vector3().fromArray(view.target.toArray ? view.target.toArray() : view.target);
+  const duration = (view.duration ?? 1.5) * 1000;
+
+  camTween = {
+    start: performance.now(),
+    duration,
+    fromPos: camera.position.clone(),
+    fromTgt: controls.target.clone(),
+    toPos,
+    toTgt,
+  };
+}
+
+// Easing
+function easeInOutCubic(t) {
+  return t < 0.5? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3)/2;
+}
+
+function updateCamTween(now) {
+  if (!camTween) return false;
+
+  const t = Math.min(1, (now - camTween.start) / camTween.duration);
+  const k = easeInOutCubic(t);
+
+  const curPos = camTween.fromPos.clone().lerp(camTween.toPos, k);
+  const curTgt = camTween.fromTgt.clone().lerp(camTween.toTgt, k);
+
+  camera.position.copy(curPos);
+  controls.target.copy(curTgt);
+  camera.lookAt(curTgt);
+
+  if (t >= 1) {
+    controls.update();
+    camTween = null;
+    return false;
+  }
+  return true;
+}
+
+// Обновление вращения моделей
+function updateModelsRotation(deltaSec) {
+  for (let i = 0; i < loadedModels.length; i++) {
+    const obj = loadedModels[i];
+    if (!obj) continue;
+    const speed = MODEL_ROT_SPEEDS[i] ?? DEFAULT_MODEL_ROT_SPEED; // рад/сек
+    obj.rotation.y += speed * deltaSec;
+  }
 }
 
 function onWindowResize() {
@@ -135,8 +284,19 @@ function onWindowResize() {
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-function animate() {
+function animate(now) {
   requestAnimationFrame(animate);
-  controls.update();
+  if (!now) now = performance.now();
+
+  const deltaSec = (now - lastTime) / 1000;
+  lastTime = now;
+
+  const animating = updateCamTween(now);
+  if (!animating) {
+    controls.update();
+  }
+
+  updateModelsRotation(deltaSec);
+
   renderer.render(scene, camera);
 }
