@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <title>SacralGeo</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="/scripts/miqtum/styles/styles.css"> 
+  <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.158.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.158.0/examples/jsm/"
+        }
+      }
+  </script>
+</head>
+<body>
+  <div class="buttons-wrapper">
+    <button onclick="document.location='/scripts/miqtum/index.html'">back</button>
+  </div> 
+  <div class="three_bg"></div>
+  <script type="module" src="/scripts/miqtum/scripts/sacralGeo.js"></script>
+
+  <div class="ui">
+    <button id="btn-home"       title="Center"><img id="icon-home"  alt="home" /></button>
+    <button id="btn-m0"         title="Model 1"><img id="icon-m0"   alt="m0" /></button>
+    <button id="btn-m1"         title="Model 2"><img id="icon-m1"   alt="m1" /></button>
+    <button id="btn-m2"         title="Model 3"><img id="icon-m2"   alt="m2" /></button>
+    <button id="btn-m3"         title="Model 4"><img id="icon-m3"   alt="m3" /></button>
+  </div>
+
+  
+  <script>
+    // Простые SVG-плейсхолдеры (замените src на свои SVG-файлы)
+    const svgPlaceholder = encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect x="8" y="8" width="32" height="32" rx="6" fill="white"/></svg>');
+    document.getElementById('icon-home').src = 'data:image/svg+xml;utf8,' + svgPlaceholder;
+    document.getElementById('icon-m0').src   = 'data:image/svg+xml;utf8,' + svgPlaceholder;
+    document.getElementById('icon-m1').src   = 'data:image/svg+xml;utf8,' + svgPlaceholder;
+    document.getElementById('icon-m2').src   = 'data:image/svg+xml;utf8,' + svgPlaceholder;
+    document.getElementById('icon-m3').src   = 'data:image/svg+xml;utf8,' + svgPlaceholder;
+  </script>
+</body>
+</html>

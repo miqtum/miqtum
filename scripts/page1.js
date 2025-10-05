@@ -47,7 +47,7 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 // add renderer to body
 wallpaper.appendChild(renderer.domElement);
 
-const loader = new GLTFLoader().setPath( 'models/');
+const loader = new GLTFLoader().setPath( '/scripts/miqtum/models/');
 loader.load('SCOOF.glb', function ( gltf ) {
 
 	scene.add( gltf.scene );
