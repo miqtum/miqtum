@@ -16,10 +16,10 @@ const container = document.querySelector('.three_bg');
 const TARGET_SIZE_DEFAULT = 1.0;
 
 const MODELS = [
-  { url: '/scripts/miqtum/models/SCOOF.glb', pos: [ 2, 0, -4], rot: [0, 0, 0], size: 3 },
-  { url: '/scripts/miqtum/models/SCOOF.glb', pos: [-4, 0, -4], rot: [0, Math.PI * 0.5, 0], size: 1.0 },
-  { url: '/scripts/miqtum/models/SCOOF.glb', pos: [ 0, 1, -6], rot: [0, 0.25*Math.PI, 0], size: 0.8 },
-  { url: '/scripts/miqtum/models/SCOOF.glb', pos: [ 4, -0.5, -5], rot: [0, -0.5*Math.PI, 0], size: 1.2 },
+  { url: '/scripts/miqtum/models/SCOOF.glb', pos: [ 0, 4, 0], rot: [0, 0, 0], size: 3 },
+  { url: '/scripts/miqtum/models/GLOCK.glb', pos: [-4, 0, 0], rot: [0, Math.PI * 0.5, 0], size: 1.0 },
+  { url: '/scripts/miqtum/models/eidos1.glb', pos: [ 0, -4, 0], rot: [0, 0.25*Math.PI, 0], size: 3 },
+  { url: '/scripts/miqtum/models/SCOOF.glb', pos: [ 4, 0, 0], rot: [0, -0.5*Math.PI, 0], size: 1.2 },
 ];
 
 // Настройки подлета к моделям
