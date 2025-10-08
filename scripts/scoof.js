@@ -138,7 +138,7 @@ controls.update();
 
 //#endregion
  
-const scoof = new GLTFLoader().setPath( '/scripts/miqtum/models/');
+const scoof = new GLTFLoader().setPath( '/models/');
 scoof.load('SCOOF.glb', function ( gltf ) {
 
     scene.add( gltf.scene );
