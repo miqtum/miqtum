@@ -18,13 +18,13 @@ function init() {
 	//#region ================ Textures
 
 	const loader = new THREE.CubeTextureLoader();
-	loader.setPath( '/scripts/miqtum/static/textures/');
+	loader.setPath( '/miqtum/static/textures/');
 
 	textureCube = loader.load( [ 'posx.jpg', 'negx.jpg', 'posy.jpg', 'negy.jpg', 'posz.jpg', 'negz.jpg' ] );
 
 	const textureLoader = new THREE.TextureLoader();
 
-	textureEquirec = textureLoader.load( '/scripts/miqtum/static/bureau.jpg' );
+	textureEquirec = textureLoader.load( '/miqtum/static/bureau.jpg' );
 	textureEquirec.mapping = THREE.EquirectangularReflectionMapping;
 	textureEquirec.colorSpace = THREE.SRGBColorSpace;
 	//#endregion

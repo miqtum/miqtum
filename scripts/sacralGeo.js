@@ -16,10 +16,10 @@ const container = document.querySelector('.three_bg');
 const TARGET_SIZE_DEFAULT = 1.0;
 
 const MODELS = [
-  { url: '/models/SCOOF.glb', pos: [ 0, 4, 0], rot: [0, 0, 0], size: 3 },
-  { url: '/models/GLOCK.glb', pos: [-4, 0, 0], rot: [0, Math.PI * 0.5, 0], size: 1.0 },
-  { url: '/models/eidos1.glb', pos: [ 0, -4, 0], rot: [0, 0.25*Math.PI, 0], size: 3 },
-  { url: '/models/SCOOF.glb', pos: [ 4, 0, 0], rot: [0, -0.5*Math.PI, 0], size: 1.2 },
+  { url: '/miqtum/models/SCOOF.glb', pos: [ 0, 4, 0], rot: [0, 0, 0], size: 3 },
+  { url: '/miqtum/models/GLOCK.glb', pos: [-4, 0, 0], rot: [0, Math.PI * 0.5, 0], size: 1.0 },
+  { url: '/miqtum/models/eidos1.glb', pos: [ 0, -4, 0], rot: [0, 0.25*Math.PI, 0], size: 3 },
+  { url: '/miqtum/models/SCOOF.glb', pos: [ 4, 0, 0], rot: [0, -0.5*Math.PI, 0], size: 1.2 },
 ];
 
 // Настройки подлета к моделям
@@ -46,7 +46,7 @@ function init() {
   scene = new THREE.Scene();
 
   const textureLoader = new THREE.TextureLoader();
-  textureEquirec = textureLoader.load('/static/squote.jpg', (tex) => {
+  textureEquirec = textureLoader.load('/miqtum/static/squote.jpg', (tex) => {
     tex.mapping = THREE.EquirectangularReflectionMapping;
     tex.colorSpace = THREE.SRGBColorSpace;
     scene.background = tex;
