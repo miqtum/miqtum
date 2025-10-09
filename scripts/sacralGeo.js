@@ -12,6 +12,9 @@ let camTween = null;
 // время для дельты
 let lastTime = performance.now();
 
+let highlightMaterial = new THREE.MeshBasicMaterial({ color: 0xff6c6c, transparent: true, opacity: 0.25 });
+let lastHighlighted = null;
+
 const container = document.querySelector('.three_bg');
 
 const TARGET_SIZE_DEFAULT = 1.0;
@@ -238,6 +241,7 @@ function flyToHome() {
 // Перелет к конкретной модели по индексу
 function flyToModel(index) {
   const model = loadedModels[index];
+  highlightModel(model);
   if (!model) return;
 
   const { center, radius } = getModelBounds(model);
@@ -263,15 +267,17 @@ function flyToModel(index) {
 let lastUIButton = null;
 const uiPanel = document.querySelector('.ui'); // контейнер с кнопками
 
+const clickSound = new Audio('/miqtum/static/trans.wav'); // укажи путь к звуку
+clickSound.volume = 0.4;
+
 function showModelInfo(index) {
   if (!MODEL_INFOS[index]) return;
   clearTimeout(popupTimeout);
 
-  // запоминаем, какая кнопка была нажата
   lastUIButton = document.activeElement?.closest('button');
 
-  // скрываем панель с кнопками
-  if (uiPanel) uiPanel.style.display = 'none';
+  // плавное исчезновение панели
+  if (uiPanel) uiPanel.classList.add('hidden');
 
   infoText.textContent = MODEL_INFOS[index];
   infoPopup.classList.add('visible');
@@ -280,23 +286,89 @@ function showModelInfo(index) {
 function hideModelInfo() {
   infoPopup.classList.remove('visible');
 
-  // вернуть панель кнопок
-  if (uiPanel) uiPanel.style.display = '';
-
-  // вернуть фокус на кнопку, если она была
-  if (lastUIButton) {
-    lastUIButton.focus();
+  // плавное появление панели
+  if (uiPanel) {
+    uiPanel.classList.remove('hidden');
   }
+
+  if (lastUIButton) lastUIButton.focus();
 }
+
+function highlightModel(model) {
+  // убрать подсветку с предыдущей
+  if (lastHighlighted) {
+    lastHighlighted.traverse((c) => {
+      if (c.material && c.userData.originalMat) {
+        c.material = c.userData.originalMat;
+        delete c.userData.originalMat;
+      }
+    });
+  }
+
+    // добавить подсветку на новую
+    model.traverse((c) => {
+      if (c.isMesh && !c.userData.originalMat) {
+        c.userData.originalMat = c.material;
+        const clone = highlightMaterial.clone();
+        clone.opacity = 0.3;
+        c.material = new THREE.MeshPhongMaterial({
+          color: c.userData.originalMat.color,
+          emissive: new THREE.Color(0xff6c6c),
+          emissiveIntensity: 0.6
+        });
+      }
+    });
+    lastHighlighted = model;
+  }
+
+
+// function showModelInfo(index) {
+//   if (!MODEL_INFOS[index]) return;
+//   clearTimeout(popupTimeout);
+
+//   // запоминаем, какая кнопка была нажата
+//   lastUIButton = document.activeElement?.closest('button');
+
+//   // скрываем панель с кнопками
+//   if (uiPanel) uiPanel.style.display = 'none';
+
+//   infoText.textContent = MODEL_INFOS[index];
+//   infoPopup.classList.add('visible');
+// }
+
+// function hideModelInfo() {
+//   infoPopup.classList.remove('visible');
+
+//   // вернуть панель кнопок
+//   if (uiPanel) uiPanel.style.display = '';
+
+//   // вернуть фокус на кнопку, если она была
+//   if (lastUIButton) {
+//     lastUIButton.focus();
+//   }
+// }
 
 const oldFlyToHome = flyToHome;
 flyToHome = function() {
   oldFlyToHome();
   infoPopup.classList.remove('visible');
+  if (lastHighlighted) {
+    lastHighlighted.traverse((c) => {
+      if (c.material && c.userData.originalMat) {
+        c.material = c.userData.originalMat;
+        delete c.userData.originalMat;
+      }
+    });
+    lastHighlighted = null;
+  }
 };
 
 // Универсальная функция перелета
 function flyTo(view) {
+  if (clickSound) {
+    clickSound.currentTime = 0;
+    clickSound.play();
+  }
   const toPos = view.pos instanceof THREE.Vector3 ? view.pos.clone() : new THREE.Vector3().fromArray(view.pos.toArray ? view.pos.toArray() : view.pos);
   const toTgt = view.target instanceof THREE.Vector3 ? view.target.clone() : new THREE.Vector3().fromArray(view.target.toArray ? view.target.toArray() : view.target);
   const duration = (view.duration ?? 1.5) * 1000;
