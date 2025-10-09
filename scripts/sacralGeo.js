@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { AnimationMixer, AnimationClip } from 'three';
 
 let camera, controls, scene, renderer;
 let textureEquirec;
@@ -30,6 +31,13 @@ const MODEL_VIEWS = [
   { dir: [-0.8,  0.5,  1.0], distFactor: 1.3, duration: 1.2 },
 ];
 
+const MODEL_INFOS = [
+  "SCOOF — экспериментальный объект, воплощающий идею симметрии и плавности.",
+  "GLOCK — технологический символ точности и силы.",
+  "EIDOS — абстрактная форма, символизирующая внутреннюю энергию.",
+  "SCOOF v2 — повторное воплощение формы, но в новой плоскости."
+];
+
 // Скорости вращения моделей (радиан/сек). Можно задавать отрицательные для разнонаправленного вращения.
 const DEFAULT_MODEL_ROT_SPEED = 0.15;
 const MODEL_ROT_SPEEDS = [0.15, -0.12, 0.1, 0.13];
@@ -39,6 +47,19 @@ const loadedModels = [];
 
 const gltfLoader = new GLTFLoader();
 
+const infoPopup = document.createElement('div');
+infoPopup.className = 'model-info';
+infoPopup.innerHTML = `
+  <div class="text"></div>
+  <button class="ok-btn">OK</button>
+`;
+document.body.appendChild(infoPopup);
+
+const infoText = infoPopup.querySelector('.text');
+const okBtn = infoPopup.querySelector('.ok-btn');
+okBtn.addEventListener('click', hideModelInfo);
+
+let popupTimeout = null;
 init();
 animate();
 
@@ -133,6 +154,12 @@ async function loadAndPrepareModel(url, targetSize = TARGET_SIZE_DEFAULT) {
     const root = gltf.scene || gltf.scenes?.[0];
     if (!root) throw new Error('GLTF: scene не найдена');
 
+    if (gltf.animations && gltf.animations.length > 0) {
+      const mixer = new THREE.AnimationMixer(root);
+      gltf.animations.forEach((clip) => mixer.clipAction(clip).play());
+      root.userData.mixer = mixer; // сохраним для animate()
+    }
+
     root.traverse((c) => {
       if (c.isMesh) {
         if (c.material && c.material.map && 'colorSpace' in c.material.map) {
@@ -204,6 +231,8 @@ function flyToHome() {
   const pos = center.clone().add(dir.multiplyScalar(dist));
 
   flyTo({ pos, target: center, duration: 1.4 });
+  infoPopup.classList.remove('visible');
+  document.querySelectorAll('.ui').forEach(el => el.style.display = '');
 }
 
 // Перелет к конкретной модели по индексу
@@ -224,7 +253,47 @@ function flyToModel(index) {
   const duration = conf.duration ?? 1.2;
 
   flyTo({ pos, target: center, duration });
+    setTimeout(() => {
+    showModelInfo(index);
+  }, (conf.duration ?? 1.2) * 1000);
+
+
 }
+
+let lastUIButton = null;
+const uiPanel = document.querySelector('.ui'); // контейнер с кнопками
+
+function showModelInfo(index) {
+  if (!MODEL_INFOS[index]) return;
+  clearTimeout(popupTimeout);
+
+  // запоминаем, какая кнопка была нажата
+  lastUIButton = document.activeElement?.closest('button');
+
+  // скрываем панель с кнопками
+  if (uiPanel) uiPanel.style.display = 'none';
+
+  infoText.textContent = MODEL_INFOS[index];
+  infoPopup.classList.add('visible');
+}
+
+function hideModelInfo() {
+  infoPopup.classList.remove('visible');
+
+  // вернуть панель кнопок
+  if (uiPanel) uiPanel.style.display = '';
+
+  // вернуть фокус на кнопку, если она была
+  if (lastUIButton) {
+    lastUIButton.focus();
+  }
+}
+
+const oldFlyToHome = flyToHome;
+flyToHome = function() {
+  oldFlyToHome();
+  infoPopup.classList.remove('visible');
+};
 
 // Универсальная функция перелета
 function flyTo(view) {
@@ -297,6 +366,12 @@ function animate(now) {
   }
 
   updateModelsRotation(deltaSec);
+
+  for (const obj of loadedModels) {
+    if (obj?.userData?.mixer) {
+      obj.userData.mixer.update(deltaSec);
+    }
+  }
 
   renderer.render(scene, camera);
 }
