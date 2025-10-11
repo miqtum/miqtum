@@ -8,11 +8,11 @@ import { OutlinePass } from 'three/addons/postprocessing/OutlinePass.js';
 let camera, controls, scene, renderer;
 let composer, outlinePass;
 
-// ÑÐ¾ÑÑ‚Ð¾ÑÐ½Ð¸Ðµ Ð°Ð½Ð¸Ð¼Ð°Ñ†Ð¸Ð¸ ÐºÐ°Ð¼ÐµÑ€Ñ‹
+// состояние анимации камеры
 let camTween = null;
-let homeView = null
+let homeView = null;
 
-// Ð²Ñ€ÐµÐ¼Ñ Ð´Ð»Ñ Ð´ÐµÐ»ÑŒÑ‚Ñ‹
+// время для дельты
 let lastTime = performance.now();
 
 const container = document.querySelector('.three_bg');
@@ -20,18 +20,18 @@ const container = document.querySelector('.three_bg');
 const TARGET_SIZE_DEFAULT = 1.0;
 
 const MODELS = [
-  { url: '/miqtum/models/SCOOF.glb', pos: [ 0, 4, 0], rot: [0, 0, 0], size: 3 },
+  { url: '/miqtum/models/SCOOF.glb', pos: [0, 4, 0], rot: [0, 0, 0], size: 3 },
   { url: '/miqtum/models/GLOCK.glb', pos: [-4, 0, 0], rot: [0, Math.PI * 0.5, 0], size: 1.0 },
-  { url: '/miqtum/models/eidos1.glb', pos: [ 0, -4, 0], rot: [0, 0.25*Math.PI, 0], size: 3 },
-  { url: '/miqtum/models/SCOOF.glb', pos: [ 4, 0, 0], rot: [0, -0.5*Math.PI, 0], size: 1.2 },
+  { url: '/miqtum/models/eidos1.glb', pos: [0, -4, 0], rot: [0, 0.25 * Math.PI, 0], size: 3 },
+  { url: '/miqtum/models/SCOOF.glb', pos: [4, 0, 0], rot: [0, -0.5 * Math.PI, 0], size: 1.2 },
 ];
 
-// ÐÐ°ÑÑ‚Ñ€Ð¾Ð¹ÐºÐ¸ Ð¿Ð¾Ð´Ð»ÐµÑ‚Ð° Ðº Ð¼Ð¾Ð´ÐµÐ»ÑÐ¼
+// Настройки подлёта к моделям
 const MODEL_VIEWS = [
-  { dir: [ 1.0,  0.3,  1.0], distFactor: 1.3, duration: 1.2 },
-  { dir: [-1.2,  0.4,  0.8], distFactor: 1.3, duration: 1.2 },
-  { dir: [ 0.6,  0.6,  1.2], distFactor: 1.4, duration: 1.3 },
-  { dir: [-0.8,  0.5,  1.0], distFactor: 1.3, duration: 1.2 },
+  { dir: [1.0, 0.3, 1.0], distFactor: 1.3, duration: 1.2 },
+  { dir: [-1.2, 0.4, 0.8], distFactor: 1.3, duration: 1.2 },
+  { dir: [0.6, 0.6, 1.2], distFactor: 1.4, duration: 1.3 },
+  { dir: [-0.8, 0.5, 1.0], distFactor: 1.3, duration: 1.2 },
 ];
 
 const MODEL_INFOS = [
@@ -41,11 +41,11 @@ const MODEL_INFOS = [
   "SCOOF v2 — повторное воплощение формы, но в новой плоскости."
 ];
 
-// Ð¡ÐºÐ¾Ñ€Ð¾ÑÑ‚Ð¸ Ð²Ñ€Ð°Ñ‰ÐµÐ½Ð¸Ñ Ð¼Ð¾Ð´ÐµÐ»ÐµÐ¹ (Ñ€Ð°Ð´Ð¸Ð°Ð½/ÑÐµÐº). ÐœÐ¾Ð¶Ð½Ð¾ Ð·Ð°Ð´Ð°Ð²Ð°Ñ‚ÑŒ Ð¾Ñ‚Ñ€Ð¸Ñ†Ð°Ñ‚ÐµÐ»ÑŒÐ½Ñ‹Ðµ Ð´Ð»Ñ Ñ€Ð°Ð·Ð½Ð¾Ð½Ð°Ð¿Ñ€Ð°Ð²Ð»ÐµÐ½Ð½Ð¾Ð³Ð¾ Ð²Ñ€Ð°Ñ‰ÐµÐ½Ð¸Ñ.
+// Скорости вращения моделей (радиан/сек). Можно задавать отрицательные для разнонаправленного вращения.
 const DEFAULT_MODEL_ROT_SPEED = 0.15;
 const MODEL_ROT_SPEEDS = [0.15, -0.12, 0.1, 0.13];
 
-// Ð¥Ñ€Ð°Ð½Ð¸Ð»Ð¸Ñ‰Ðµ Ð·Ð°Ð³Ñ€ÑƒÐ¶ÐµÐ½Ð½Ñ‹Ñ… Ð¼Ð¾Ð´ÐµÐ»ÐµÐ¹
+// Хранилище загруженных моделей
 const loadedModels = [];
 
 const gltfLoader = new GLTFLoader();
@@ -70,29 +70,29 @@ animate();
 function init() {
   scene = new THREE.Scene();
 
-// --- Ð¤ÐžÐ Ð¡ Ð¢Ð•ÐšÐ¡Ð¢Ð£Ð ÐžÐ™ ---
-const textureLoader = new THREE.TextureLoader();
-textureLoader.load('/miqtum/static/abstract.jpg', (textureEquirec) => {
-  textureEquirec.mapping = THREE.EquirectangularReflectionMapping;
-  textureEquirec.colorSpace = THREE.SRGBColorSpace;
-  
-  // --- Ð—Ð°Ð¼ÐµÐ½ÑÐµÐ¼ Ñ„Ð¾Ð½ Ð½Ð° Ñ€ÐµÐ°Ð»ÑŒÐ½Ñ‹Ð¹ Ð¾Ð±ÑŠÐµÐºÑ‚ ---
-  const skyGeo = new THREE.SphereGeometry(55, 60, 40);
-  skyGeo.scale(1, 1, 1);
+  // --- ФОН С ТЕКСТУРОЙ ---
+  const textureLoader = new THREE.TextureLoader();
+  textureLoader.load('/miqtum/static/abstract.jpg', (textureEquirec) => {
+    textureEquirec.mapping = THREE.EquirectangularReflectionMapping;
+    textureEquirec.colorSpace = THREE.SRGBColorSpace;
 
-  const skyMat = new THREE.MeshStandardMaterial({
-  map: textureEquirec,
-  side: THREE.BackSide,
-  toneMapped: true 
-});
+    // --- Заменяем фон на реальный объект ---
+    const skyGeo = new THREE.SphereGeometry(55, 60, 40);
+    skyGeo.scale(1, 1, 1);
 
-  const skyMesh = new THREE.Mesh(skyGeo, skyMat);
-  scene.add(skyMesh);
+    const skyMat = new THREE.MeshStandardMaterial({
+      map: textureEquirec,
+      side: THREE.BackSide,
+      toneMapped: true
+    });
 
-// Ð²ÑÑ‘ ÐµÑ‰Ñ‘ Ð¼Ð¾Ð¶Ð½Ð¾ Ð¸ÑÐ¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÑŒ Ð¾ÐºÑ€ÑƒÐ¶ÐµÐ½Ð¸Ðµ Ð´Ð»Ñ Ð¾ÑÐ²ÐµÑ‰ÐµÐ½Ð¸Ñ
-  scene.environment = textureEquirec;
-  
-});
+    const skyMesh = new THREE.Mesh(skyGeo, skyMat);
+    scene.add(skyMesh);
+
+    // всё ещё можно использовать окружение для освещения
+    scene.environment = textureEquirec;
+
+  });
 
 
   renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -113,7 +113,7 @@ textureLoader.load('/miqtum/static/abstract.jpg', (textureEquirec) => {
   composer = new EffectComposer(renderer);
   const renderPass = new RenderPass(scene, camera);
   composer.addPass(renderPass);
-  
+
   outlinePass = new OutlinePass(new THREE.Vector2(window.innerWidth, window.innerHeight), scene, camera);
   outlinePass.edgeStrength = 4.0;
   outlinePass.edgeGlow = 3;
@@ -122,13 +122,13 @@ textureLoader.load('/miqtum/static/abstract.jpg', (textureEquirec) => {
   outlinePass.visibleEdgeColor.set(0xff6c6c);
   outlinePass.hiddenEdgeColor.set(0x000000);
   composer.addPass(outlinePass);
-    
+
 
   controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.05;
-  controls.enablePan = false;   // Ð±ÐµÐ· Ð¿Ð°Ð½Ð¾Ñ€Ð°Ð¼Ð¸Ñ€Ð¾Ð²Ð°Ð½Ð¸Ñ
-  controls.enableZoom = false;  // Ñ‚Ð¾Ð»ÑŒÐºÐ¾ Ð²Ñ€Ð°Ñ‰ÐµÐ½Ð¸Ðµ
+  controls.enablePan = false;   // без панорамирования
+  controls.enableZoom = false;  // только вращение
   controls.minDistance = 0.0;
   controls.maxDistance = 100.0;
   controls.target.set(0, 0, -1);
@@ -144,12 +144,12 @@ textureLoader.load('/miqtum/static/abstract.jpg', (textureEquirec) => {
   scene.add(new THREE.AmbientLight(0xff00ff, 6));
 
   addModelsFromConfig(MODELS);
-  
-  // Ð’Ñ‹Ñ‡Ð¸ÑÐ»ÑÐµÐ¼ Ð¸ Ð·Ð°Ð¿ÑƒÑÐºÐ°ÐµÐ¼ Ð¿Ð»Ð°Ð²Ð½Ñ‹Ð¹ Ð¿Ð¾Ð´Ð»ÐµÑ‚ Ðº "Home"
+
+  // Вычисляем и запускаем плавный подлёт к "Home"
   setTimeout(() => {
     homeView = computeHomeView();
     if (homeView) {
-      // Ð½Ð°Ñ‡Ð½ÐµÐ¼ Ñ‡ÑƒÑ‚ÑŒ Ð±Ð»Ð¸Ð¶Ðµ Ðº Ñ†ÐµÐ½Ñ‚Ñ€Ñƒ â€” Ð´Ð»Ñ ÑÑ„Ñ„ÐµÐºÑ‚Ð° Ð¿Ñ€Ð¸Ð±Ð»Ð¸Ð¶ÐµÐ½Ð¸Ñ
+      // начнём чуть ближе к центру — для эффекта приближения
       const startPos = homeView.target.clone().add(
         homeView.pos.clone().sub(homeView.target).multiplyScalar(0.3)
       );
@@ -157,14 +157,14 @@ textureLoader.load('/miqtum/static/abstract.jpg', (textureEquirec) => {
       camera.position.copy(startPos);
       controls.target.copy(homeView.target);
 
-      // Ð¿Ð»Ð°Ð²Ð½Ñ‹Ð¹ Ð¿Ð¾Ð´Ð»ÐµÑ‚ (zoom-in)
+      // плавный подлёт (zoom-in)
       flyTo({
         pos: homeView.pos,
         target: homeView.target,
-        duration: 2.0 // ÑÐµÐºÑƒÐ½Ð´Ð°-Ð¿Ð¾Ð»Ñ‚Ð¾Ñ€Ñ‹ â€” ÐºÑ€Ð°ÑÐ¸Ð²Ð¾
+        duration: 2.0 // секунда-полторы — красиво
       });
     }
-  }, 800); // Ð½ÐµÐ±Ð¾Ð»ÑŒÑˆÐ°Ñ Ð·Ð°Ð´ÐµÑ€Ð¶ÐºÐ°, Ñ‡Ñ‚Ð¾Ð±Ñ‹ Ð¼Ð¾Ð´ÐµÐ»Ð¸ ÑƒÑÐ¿ÐµÐ»Ð¸ Ð¾Ñ‚Ñ€Ð¸ÑÐ¾Ð²Ð°Ñ‚ÑŒÑÑ
+  }, 800); // небольшая задержка, чтобы модели успели отрисоваться
 
 
   setupUI();
@@ -174,10 +174,10 @@ textureLoader.load('/miqtum/static/abstract.jpg', (textureEquirec) => {
 
 function setupUI() {
   bindBtn('btn-home', () => flyToHome());
-  bindBtn('btn-m0',   () => flyToModel(0));
-  bindBtn('btn-m1',   () => flyToModel(1));
-  bindBtn('btn-m2',   () => flyToModel(2));
-  bindBtn('btn-m3',   () => flyToModel(3));
+  bindBtn('btn-m0', () => flyToModel(0));
+  bindBtn('btn-m1', () => flyToModel(1));
+  bindBtn('btn-m2', () => flyToModel(2));
+  bindBtn('btn-m3', () => flyToModel(3));
 }
 
 function bindBtn(id, handler) {
@@ -203,7 +203,7 @@ async function addModelsFromConfig(list) {
     }
 
     scene.add(obj);
-    loadedModels[i] = obj; // ÑÐ¾Ñ…Ñ€Ð°Ð½Ð¸Ð¼ ÑÑÑ‹Ð»ÐºÑƒ
+    loadedModels[i] = obj; // сохраним ссылку
   }
 }
 
@@ -211,12 +211,12 @@ async function loadAndPrepareModel(url, targetSize = TARGET_SIZE_DEFAULT) {
   try {
     const gltf = await gltfLoader.loadAsync(url);
     const root = gltf.scene || gltf.scenes?.[0];
-    if (!root) throw new Error('GLTF: scene Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½Ð°');
+    if (!root) throw new Error('GLTF: сцена не найдена');
 
     if (gltf.animations && gltf.animations.length > 0) {
       const mixer = new THREE.AnimationMixer(root);
       gltf.animations.forEach((clip) => mixer.clipAction(clip).play());
-      root.userData.mixer = mixer; // ÑÐ¾Ñ…Ñ€Ð°Ð½Ð¸Ð¼ Ð´Ð»Ñ animate()
+      root.userData.mixer = mixer; // сохраним для animate()
     }
 
     root.traverse((c) => {
@@ -232,7 +232,7 @@ async function loadAndPrepareModel(url, targetSize = TARGET_SIZE_DEFAULT) {
     centerAndNormalize(root, targetSize);
     return root;
   } catch (e) {
-    console.error('ÐžÑˆÐ¸Ð±ÐºÐ° Ð·Ð°Ð³Ñ€ÑƒÐ·ÐºÐ¸ GLTF:', url, e);
+    console.error('Ошибка загрузки GLTF:', url, e);
     return null;
   }
 }
@@ -245,14 +245,15 @@ function centerAndNormalize(object3D, targetSize = 1.0) {
   box.getSize(size);
   box.getCenter(center);
 
-  object3D.position.sub(center); // Ñ†ÐµÐ½Ñ‚Ñ€ Ð² (0,0,0)
+  object3D.position.sub(center); // центр в (0,0,0)
 
   const maxDim = Math.max(size.x, size.y, size.z) || 1;
   const scale = targetSize / maxDim;
   object3D.scale.setScalar(scale);
 }
 
-// Ð’Ñ‹Ñ‡Ð¸ÑÐ»ÐµÐ½Ð¸Ðµ Ñ€Ð°ÑÑÑ‚Ð¾ÑÐ½Ð¸Ñ Ð´Ð¾ ÐºÐ°Ð¼ÐµÑ€Ñ‹, Ñ‡Ñ‚Ð¾Ð±Ñ‹ ÑƒÐ¼ÐµÑÑ‚Ð¸Ñ‚ÑŒ ÑÑ„ÐµÑ€Ñƒ Ñ€Ð°Ð´Ð¸ÑƒÑÐ° r Ð² ÐºÐ°Ð´Ñ€Ðµ
+
+// Вычисление расстояния до камеры, чтобы уместить сферу радиуса r в кадре
 function getFitDistanceForRadius(r) {
   const vFOV = THREE.MathUtils.degToRad(camera.fov);
   const hFOV = 2 * Math.atan(Math.tan(vFOV / 2) * camera.aspect);
@@ -261,7 +262,7 @@ function getFitDistanceForRadius(r) {
   return Math.max(distV, distH);
 }
 
-// ÐŸÐ¾Ð»ÑƒÑ‡Ð¸Ñ‚ÑŒ Ñ†ÐµÐ½Ñ‚Ñ€ Ð¸ Ñ€Ð°Ð´Ð¸ÑƒÑ Ð¼Ð¾Ð´ÐµÐ»Ð¸ (Ð² Ð¼Ð¸Ñ€Ð¾Ð²Ñ‹Ñ… ÐºÐ¾Ð¾Ñ€Ð´Ð¸Ð½Ð°Ñ‚Ð°Ñ…)
+// Получить центр и радиус модели (в мировых координатах)
 function getModelBounds(model) {
   model.updateWorldMatrix(true, true);
   const box = new THREE.Box3().setFromObject(model);
@@ -291,7 +292,7 @@ function computeHomeView() {
   return { pos, target: center, radius: r };
 }
 
-// ÐŸÐµÑ€ÐµÐ»ÐµÑ‚ Ðº Ð¾Ð±Ñ‰ÐµÐ¹ ÑÑ†ÐµÐ½Ðµ
+// Перелёт к общей сцене
 function flyToHome() {
   if (!homeView) homeView = computeHomeView();
   if (!homeView) return;
@@ -302,7 +303,7 @@ function flyToHome() {
   outlinePass.selectedObjects = [];
 }
 
-// ÐŸÐµÑ€ÐµÐ»ÐµÑ‚ Ðº ÐºÐ¾Ð½ÐºÑ€ÐµÑ‚Ð½Ð¾Ð¹ Ð¼Ð¾Ð´ÐµÐ»Ð¸ Ð¿Ð¾ Ð¸Ð½Ð´ÐµÐºÑÑƒ
+// Перелёт к конкретной модели по индексу
 function flyToModel(index) {
   const model = loadedModels[index];
   highlightModel(model);
@@ -321,17 +322,15 @@ function flyToModel(index) {
   const duration = conf.duration ?? 1.2;
 
   flyTo({ pos, target: center, duration });
-    setTimeout(() => {
+  setTimeout(() => {
     showModelInfo(index);
   }, (conf.duration ?? 1.2) * 1000);
-
-
 }
 
 let lastUIButton = null;
-const uiPanel = document.querySelector('.ui'); // ÐºÐ¾Ð½Ñ‚ÐµÐ¹Ð½ÐµÑ€ Ñ ÐºÐ½Ð¾Ð¿ÐºÐ°Ð¼Ð¸
+const uiPanel = document.querySelector('.ui'); // контейнер с кнопками
 
-const clickSound = new Audio('/miqtum/static/trans.wav'); // ÑƒÐºÐ°Ð¶Ð¸ Ð¿ÑƒÑ‚ÑŒ Ðº Ð·Ð²ÑƒÐºÑƒ
+const clickSound = new Audio('/miqtum/static/trans.wav'); // укажи путь к звуку
 clickSound.volume = 0;
 
 function showModelInfo(index) {
@@ -340,7 +339,7 @@ function showModelInfo(index) {
 
   lastUIButton = document.activeElement?.closest('button');
 
-  // Ð¿Ð»Ð°Ð²Ð½Ð¾Ðµ Ð¸ÑÑ‡ÐµÐ·Ð½Ð¾Ð²ÐµÐ½Ð¸Ðµ Ð¿Ð°Ð½ÐµÐ»Ð¸
+  // плавное исчезновение панели
   if (uiPanel) uiPanel.classList.add('hidden');
 
   infoText.textContent = MODEL_INFOS[index];
@@ -350,7 +349,7 @@ function showModelInfo(index) {
 function hideModelInfo() {
   infoPopup.classList.remove('visible');
 
-  // Ð¿Ð»Ð°Ð²Ð½Ð¾Ðµ Ð¿Ð¾ÑÐ²Ð»ÐµÐ½Ð¸Ðµ Ð¿Ð°Ð½ÐµÐ»Ð¸
+  // плавное появление панели
   if (uiPanel) {
     uiPanel.classList.remove('hidden');
   }
@@ -365,7 +364,7 @@ function highlightModel(model) {
 
 const oldFlyToHome = flyToHome;
 
-flyToHome = function() {
+flyToHome = function () {
   oldFlyToHome();
   infoPopup.classList.remove('visible');
   if (lastHighlighted) {
@@ -379,14 +378,22 @@ flyToHome = function() {
   }
 };
 
-// Ð£Ð½Ð¸Ð²ÐµÑ€ÑÐ°Ð»ÑŒÐ½Ð°Ñ Ñ„ÑƒÐ½ÐºÑ†Ð¸Ñ Ð¿ÐµÑ€ÐµÐ»ÐµÑ‚Ð°
+// Универсальная функция перелёта
 function flyTo(view) {
   if (clickSound) {
     clickSound.currentTime = 0;
     clickSound.play();
   }
-  const toPos = view.pos instanceof THREE.Vector3 ? view.pos.clone() : new THREE.Vector3().fromArray(view.pos.toArray ? view.pos.toArray() : view.pos);
-  const toTgt = view.target instanceof THREE.Vector3 ? view.target.clone() : new THREE.Vector3().fromArray(view.target.toArray ? view.target.toArray() : view.target);
+  const toPos = view.pos instanceof THREE.Vector3
+    ? view.pos.clone()
+    : new THREE.Vector3().fromArray(
+        view.pos.toArray ? view.pos.toArray() : view.pos
+      );
+  const toTgt = view.target instanceof THREE.Vector3
+    ? view.target.clone()
+    : new THREE.Vector3().fromArray(
+        view.target.toArray ? view.target.toArray() : view.target
+      );
   const duration = (view.duration ?? 1.5) * 1000;
 
   camTween = {
@@ -399,9 +406,11 @@ function flyTo(view) {
   };
 }
 
-// Easing
+// Easing — плавная функция ускорения/замедления
 function easeInOutCubic(t) {
-  return t < 0.5? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3)/2;
+  return t < 0.5
+    ? 4 * t * t * t
+    : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
 
 function updateCamTween(now) {
@@ -425,25 +434,27 @@ function updateCamTween(now) {
   return true;
 }
 
-// ÐžÐ±Ð½Ð¾Ð²Ð»ÐµÐ½Ð¸Ðµ Ð²Ñ€Ð°Ñ‰ÐµÐ½Ð¸Ñ Ð¼Ð¾Ð´ÐµÐ»ÐµÐ¹
+// Обновление вращения моделей
 function updateModelsRotation(deltaSec) {
   for (let i = 0; i < loadedModels.length; i++) {
     const obj = loadedModels[i];
     if (!obj) continue;
-    const speed = MODEL_ROT_SPEEDS[i] ?? DEFAULT_MODEL_ROT_SPEED; // Ñ€Ð°Ð´/ÑÐµÐº
+    const speed = MODEL_ROT_SPEEDS[i] ?? DEFAULT_MODEL_ROT_SPEED; // рад/сек
     obj.rotation.y += speed * deltaSec;
   }
 }
 
+// Обработка изменения размера окна
 function onWindowResize() {
   if (composer) {
     composer.setSize(window.innerWidth, window.innerHeight);
-  }  
+  }
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
+// Главный цикл анимации
 function animate(now) {
   requestAnimationFrame(animate);
   if (!now) now = performance.now();
@@ -463,8 +474,7 @@ function animate(now) {
       obj.userData.mixer.update(deltaSec);
     }
   }
-    
-  // Ð¿Ð¾Ñ‚Ð¾Ð¼ Ñ€ÐµÐ½Ð´ÐµÑ€ Ð¾ÑÐ½Ð¾Ð²Ð½Ð¾Ð¹ ÑÑ†ÐµÐ½Ñ‹ Ñ ÑÑ„Ñ„ÐµÐºÑ‚Ð°Ð¼Ð¸
-  composer.render();
 
+  // потом рендер основной сцены с эффектами
+  composer.render();
 }
