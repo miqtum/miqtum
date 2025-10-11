@@ -142,6 +142,28 @@ button:hover {
   background: rgba(132, 206, 255, 0.85);
 }
 
+.ui.locked button {
+  pointer-events: none !important;
+}
+
+.ui.locked button:focus {
+  pointer-events: auto !important;
+}
+
+/* Активная кнопка (та, на которую уже нажали) */
+button.active-model {
+  pointer-events: none !important;
+}
+
+/* Для активной кнопки отключаем hover/active эффекты */
+button.active-model:hover,
+button.active-model:active {
+  pointer-events: none !important;
+  filter: none !important;
+  transform: none !important;
+}
+
+
 .ui button img {
   width: 26px;
   height: 26px;
