@@ -1,19 +1,19 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { AnimationMixer, AnimationClip } from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { OutlinePass } from 'three/addons/postprocessing/OutlinePass.js';
 
 let camera, controls, scene, renderer;
-let textureEquirec;
+let composer, outlinePass;
 
 // состояние анимации камеры
 let camTween = null;
+let homeView = null
 
 // время для дельты
 let lastTime = performance.now();
-
-let highlightMaterial = new THREE.MeshBasicMaterial({ color: 0xff6c6c, transparent: true, opacity: 0.25 });
-let lastHighlighted = null;
 
 const container = document.querySelector('.three_bg');
 
@@ -63,33 +63,66 @@ const okBtn = infoPopup.querySelector('.ok-btn');
 okBtn.addEventListener('click', hideModelInfo);
 
 let popupTimeout = null;
+
 init();
 animate();
 
 function init() {
   scene = new THREE.Scene();
 
-  const textureLoader = new THREE.TextureLoader();
-  textureEquirec = textureLoader.load('/miqtum/static/squote.jpg', (tex) => {
-    tex.mapping = THREE.EquirectangularReflectionMapping;
-    tex.colorSpace = THREE.SRGBColorSpace;
-    scene.background = tex;
-    scene.environment = tex;
-  });
+// --- ФОН С ТЕКСТУРОЙ ---
+const textureLoader = new THREE.TextureLoader();
+textureLoader.load('/miqtum/static/abstract.jpg', (textureEquirec) => {
+  textureEquirec.mapping = THREE.EquirectangularReflectionMapping;
+  textureEquirec.colorSpace = THREE.SRGBColorSpace;
+  
+  // --- Заменяем фон на реальный объект ---
+  const skyGeo = new THREE.SphereGeometry(55, 60, 40);
+  skyGeo.scale(1, 1, 1);
+
+  const skyMat = new THREE.MeshStandardMaterial({
+  map: textureEquirec,
+  side: THREE.BackSide,
+  toneMapped: true 
+});
+
+  const skyMesh = new THREE.Mesh(skyGeo, skyMat);
+  scene.add(skyMesh);
+
+// всё ещё можно использовать окружение для освещения
+  scene.environment = textureEquirec;
+  
+});
+
 
   renderer = new THREE.WebGLRenderer({ antialias: true });
-  if ('outputColorSpace' in renderer) {
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-  } else {
-    renderer.outputEncoding = THREE.sRGBEncoding;
-  }
-  renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  container.appendChild(renderer.domElement);
+
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.8;
 
   camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 100);
   camera.position.set(0, 0, 0);
   camera.lookAt(0, 0, -1);
+
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  container.appendChild(renderer.domElement);
+
+  // --- POSTPROCESSING (Outline) ---
+  composer = new EffectComposer(renderer);
+  const renderPass = new RenderPass(scene, camera);
+  composer.addPass(renderPass);
+  
+  outlinePass = new OutlinePass(new THREE.Vector2(window.innerWidth, window.innerHeight), scene, camera);
+  outlinePass.edgeStrength = 4.0;
+  outlinePass.edgeGlow = 3;
+  outlinePass.edgeThickness = 6;
+  outlinePass.pulsePeriod = 2.5;
+  outlinePass.visibleEdgeColor.set(0xff6c6c);
+  outlinePass.hiddenEdgeColor.set(0x000000);
+  composer.addPass(outlinePass);
+    
 
   controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
@@ -100,17 +133,40 @@ function init() {
   controls.maxDistance = 100.0;
   controls.target.set(0, 0, -1);
 
-  const dir1 = new THREE.DirectionalLight(0xffffff, 3);
-  dir1.position.set(1, 1, 1);
+  const dir1 = new THREE.DirectionalLight(0xffffff, 12);
+  dir1.position.set(2, 2, 2);
   scene.add(dir1);
 
-  const dir2 = new THREE.DirectionalLight(0x002288, 3);
-  dir2.position.set(-1, -1, -1);
+  const dir2 = new THREE.DirectionalLight(0x44fcff, 3);
+  dir2.position.set(-2, -2, -2);
   scene.add(dir2);
 
-  scene.add(new THREE.AmbientLight(0x555555));
+  scene.add(new THREE.AmbientLight(0xff00ff, 6));
 
   addModelsFromConfig(MODELS);
+  
+  // Вычисляем и запускаем плавный подлет к "Home"
+  setTimeout(() => {
+    homeView = computeHomeView();
+    if (homeView) {
+      // начнем чуть ближе к центру — для эффекта приближения
+      const startPos = homeView.target.clone().add(
+        homeView.pos.clone().sub(homeView.target).multiplyScalar(0.3)
+      );
+
+      camera.position.copy(startPos);
+      controls.target.copy(homeView.target);
+
+      // плавный подлет (zoom-in)
+      flyTo({
+        pos: homeView.pos,
+        target: homeView.target,
+        duration: 2.0 // секунда-полторы — красиво
+      });
+    }
+  }, 800); // небольшая задержка, чтобы модели успели отрисоваться
+
+
   setupUI();
 
   window.addEventListener('resize', onWindowResize);
@@ -216,10 +272,9 @@ function getModelBounds(model) {
   return { center, radius };
 }
 
-// Перелет к общей сцене
-function flyToHome() {
+function computeHomeView() {
   const objs = loadedModels.filter(Boolean);
-  if (objs.length === 0) return;
+  if (objs.length === 0) return null;
 
   const box = new THREE.Box3();
   objs.forEach(o => box.expandByObject(o));
@@ -233,9 +288,18 @@ function flyToHome() {
   const dir = new THREE.Vector3(-1, 0.5, 2).normalize();
   const pos = center.clone().add(dir.multiplyScalar(dist));
 
-  flyTo({ pos, target: center, duration: 1.4 });
+  return { pos, target: center, radius: r };
+}
+
+// Перелет к общей сцене
+function flyToHome() {
+  if (!homeView) homeView = computeHomeView();
+  if (!homeView) return;
+
+  flyTo({ pos: homeView.pos, target: homeView.target, duration: 1.4 });
   infoPopup.classList.remove('visible');
   document.querySelectorAll('.ui').forEach(el => el.style.display = '');
+  outlinePass.selectedObjects = [];
 }
 
 // Перелет к конкретной модели по индексу
@@ -268,7 +332,7 @@ let lastUIButton = null;
 const uiPanel = document.querySelector('.ui'); // контейнер с кнопками
 
 const clickSound = new Audio('/miqtum/static/trans.wav'); // укажи путь к звуку
-clickSound.volume = 0.4;
+clickSound.volume = 0;
 
 function showModelInfo(index) {
   if (!MODEL_INFOS[index]) return;
@@ -295,60 +359,12 @@ function hideModelInfo() {
 }
 
 function highlightModel(model) {
-  // убрать подсветку с предыдущей
-  if (lastHighlighted) {
-    lastHighlighted.traverse((c) => {
-      if (c.material && c.userData.originalMat) {
-        c.material = c.userData.originalMat;
-        delete c.userData.originalMat;
-      }
-    });
-  }
-
-    // добавить подсветку на новую
-    model.traverse((c) => {
-      if (c.isMesh && !c.userData.originalMat) {
-        c.userData.originalMat = c.material;
-        const clone = highlightMaterial.clone();
-        clone.opacity = 0.3;
-        c.material = new THREE.MeshPhongMaterial({
-          color: c.userData.originalMat.color,
-          emissive: new THREE.Color(0xff6c6c),
-          emissiveIntensity: 0.6
-        });
-      }
-    });
-    lastHighlighted = model;
-  }
-
-
-// function showModelInfo(index) {
-//   if (!MODEL_INFOS[index]) return;
-//   clearTimeout(popupTimeout);
-
-//   // запоминаем, какая кнопка была нажата
-//   lastUIButton = document.activeElement?.closest('button');
-
-//   // скрываем панель с кнопками
-//   if (uiPanel) uiPanel.style.display = 'none';
-
-//   infoText.textContent = MODEL_INFOS[index];
-//   infoPopup.classList.add('visible');
-// }
-
-// function hideModelInfo() {
-//   infoPopup.classList.remove('visible');
-
-//   // вернуть панель кнопок
-//   if (uiPanel) uiPanel.style.display = '';
-
-//   // вернуть фокус на кнопку, если она была
-//   if (lastUIButton) {
-//     lastUIButton.focus();
-//   }
-// }
+  if (!model) return;
+  outlinePass.selectedObjects = [model];
+}
 
 const oldFlyToHome = flyToHome;
+
 flyToHome = function() {
   oldFlyToHome();
   infoPopup.classList.remove('visible');
@@ -420,6 +436,9 @@ function updateModelsRotation(deltaSec) {
 }
 
 function onWindowResize() {
+  if (composer) {
+    composer.setSize(window.innerWidth, window.innerHeight);
+  }  
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
@@ -444,6 +463,8 @@ function animate(now) {
       obj.userData.mixer.update(deltaSec);
     }
   }
+    
+  // потом рендер основной сцены с эффектами
+  composer.render();
 
-  renderer.render(scene, camera);
 }

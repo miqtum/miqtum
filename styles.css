@@ -31,13 +31,23 @@ k  body {
   position: top;
   width: 100%;
   height: 100vh;
-  background: #ff2525;
+  background: #000000;
   color: #fff;
   border-width: 0;
   overflow: visible;
   background-size: cover;
   background-repeat: no-repeat;  
 }
+
+/* .three_bg canvas {
+  opacity: 0;
+  animation: fadeInScene 2s ease forwards;
+}
+
+@keyframes fadeInScene {
+  from { opacity: 0; }
+  to { opacity: 1; }
+} */
 
 .iframe{
   position: bottom; 
