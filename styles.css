@@ -144,6 +144,32 @@ button:last-child {
     opacity: 1;
   }
 
+  /* другие кнопки — полностью неинтерактивны и без hover/active/focus */
+.ui button.disabled-by-lock,
+.ui button.disabled-by-lock:hover,
+.ui button.disabled-by-lock:active,
+.ui button.disabled-by-lock:focus {
+  pointer-events: none;
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: grayscale(0.6);
+}
+
+/* заблоканная (нажатая) кнопка: сохраняет фокус визуально, но не реагирует на hover/active */
+.ui button.locked {
+  pointer-events: none; /* убираем hover/active по мыши */
+  /* НЕ ставим disabled — чтобы кнопка могла оставаться в фокусе */
+}
+
+/* при этом, если у тебя есть правило .ui button:focus { ... } — оно всё ещё будет работать.
+   при необходимости можно усилить вид фокуса для locked:
+*/
+.ui button.locked:focus {
+  /* пример — если надо явно показать что кнопка в фокусе */
+  outline: 2px solid rgba(255,108,108,0.9);
+  box-shadow: 0 0 8px rgba(255,108,108,0.12);
+}
+
   .model-info {
     position: fixed;
     bottom: 40px;
