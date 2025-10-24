@@ -117,6 +117,29 @@ button:hover {
   backdrop-filter: blur(4px);
   transition: transform .08s ease, opacity .2s ease;
   padding: 0;
+  pointer-events: auto;
+}
+
+.ui button.pressed {
+  pointer-events: auto;
+}
+
+.ui button.pressed:hover,
+.ui button.pressed:active {
+  pointer-events: none;
+  transform: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+  background-color: inherit !important;
+  color: inherit !important;
+  cursor: default !important;
+}
+
+/* состояние "неактивна" — вообще не реагирует */
+.ui button.inactive {
+  pointer-events: none !important;
+  filter: grayscale(0.7) brightness(0.7);
+  cursor: default !important;
 }
 
 .ui.hidden {

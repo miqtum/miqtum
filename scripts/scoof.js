@@ -2,7 +2,6 @@ import * as THREE from 'three';
 
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 
 let camera, scene, renderer;
 let clock = new THREE.Clock();
@@ -107,31 +106,37 @@ const maxSpeedPositive = 2.0;
 const minSpeedNegative = -0.3;
 const maxSpeedNegative = -2.0; 
 
+// заменяет старые mousedown / mouseup / mousemove обработчики
+let baseSpeed = 0.3;          // базовая скорость вращения (по умолчанию)
+let lastDirection = 1;        // 1 => вправо, -1 => влево
+
 document.addEventListener('mousedown', () => {
-    isMouseDown = true;
+  isMouseDown = true;
 });
 
 document.addEventListener('mouseup', () => {
-    isMouseDown = false;
-    controls.autoRotateSpeed = lastSpeed;
+  isMouseDown = false;
+  // вернуть постоянную базовую скорость, сохранив направление
+  controls.autoRotateSpeed = lastDirection * baseSpeed;
 });
 
 document.addEventListener('mousemove', (event) => {
-    if (isMouseDown) {
-        const deltaX = event.movementX;
-        let newSpeed = deltaX * 0.01;
+  if (!isMouseDown) return;
 
-        // Ограничиваем скорость в зависимости от направления
-        if (newSpeed > 0) {
-            newSpeed = Math.max(minSpeedPositive, Math.min(maxSpeedPositive, newSpeed));
-        } else if (newSpeed < 0) {
-            newSpeed = Math.min(minSpeedNegative, Math.max(maxSpeedNegative, newSpeed));
-        }
+  const deltaX = event.movementX;
 
-        lastSpeed = newSpeed;
-        controls.autoRotateSpeed = lastSpeed;
-        controls.autoRotate = true;
-    }
+  // если движение по X отсутствует — не меняем направление/скорость
+  if (deltaX === 0) return;
+
+  // определяем направление по знаку движения
+  lastDirection = deltaX > 0 ? 1 : -1;
+
+  // вычисляем новую величину скорости по модулю и ограничиваем её
+  const mag = Math.min(maxSpeedPositive, Math.max(minSpeedPositive, Math.abs(deltaX * 0.01)));
+
+  // применяем скорость с учётом направления
+  controls.autoRotateSpeed = lastDirection * mag;
+  controls.autoRotate = true;
 });
 
 controls.update(); 

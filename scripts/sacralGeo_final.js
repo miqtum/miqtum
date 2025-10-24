@@ -22,7 +22,7 @@ const TARGET_SIZE_DEFAULT = 1.0;
 const MODELS = [
     { url: '/miqtum/models/SCOOF.glb', pos: [0, 4, 0], rot: [0, 0, 0], size: 3 },
     { url: '/miqtum/models/GLOCK.glb', pos: [-4, 0, 0], rot: [0, Math.PI * 0.5, 0], size: 1.0 },
-    { url: '/miqtum/models/eidos1.glb', pos: [0, -4, 0], rot: [0, 0.25 * Math.PI, 0], size: 3 },
+    { url: '/miqtum/models/eidos.glb', pos: [0, -4, 0], rot: [0, 0.25 * Math.PI, 0], size: 3 },
     { url: '/miqtum/models/SCOOF.glb', pos: [4, 0, 0], rot: [0, -0.5 * Math.PI, 0], size: 1.2 },
 ];
 
@@ -72,7 +72,7 @@ function init() {
 
     // --- ФОН С ТЕКСТУРОЙ ---
     const textureLoader = new THREE.TextureLoader();
-    textureLoader.load('/miqtum/static/abstract.jpg', (textureEquirec) => {
+    textureLoader.load('/miqtum/static/Sci-FiHDRIgen.jpg', (textureEquirec) => {
         textureEquirec.mapping = THREE.EquirectangularReflectionMapping;
         textureEquirec.colorSpace = THREE.SRGBColorSpace;
 
@@ -99,7 +99,7 @@ function init() {
 
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.8;
+    renderer.toneMappingExposure = 1;
 
     camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 100);
     camera.position.set(0, 0, 0);
@@ -286,7 +286,7 @@ function computeHomeView() {
 
     const baseDist = getFitDistanceForRadius(r);
     const dist = baseDist * 1.3;
-    const dir = new THREE.Vector3(-1, 0.5, 2).normalize();
+    const dir = new THREE.Vector3(0, 0.5, 2).normalize();
     const pos = center.clone().add(dir.multiplyScalar(dist));
 
     return { pos, target: center, radius: r };
@@ -305,6 +305,23 @@ function flyToHome() {
 
 // Перелёт к конкретной модели по индексу
 function flyToModel(index) {
+    const btn = document.querySelector(`#btn-m${index}`);
+
+    // если интерфейс заблокирован или кнопка неактивна — выходим
+    if (uiLocked || btn?.classList.contains('inactive') || btn?.classList.contains('pressed')) return;
+
+    // делаем эту кнопку "нажатой", а остальные "неактивными"
+    document.querySelectorAll('.ui button').forEach(b => {
+        b.classList.remove('pressed', 'inactive');
+        if (b !== btn) b.classList.add('inactive');
+    });
+    btn.classList.add('pressed');
+
+    uiLocked = true;
+    activeModelButton = btn;
+
+    // далее оригинальный вызов flyToModel
+
     const model = loadedModels[index];
     highlightModel(model);
     if (!model) return;
@@ -340,6 +357,7 @@ function setUILocked(locked) {
 }
 
 let activeModelButton = null;
+let uiLocked = false;
 
 // Оборачиваем только flyToModel — home не трогаем
 const _flyToModel = flyToModel;
@@ -358,9 +376,14 @@ flyToModel = function (index, ...args) {
 // Разблокируем при клике на кнопку OK
 okBtn?.addEventListener('click', () => {
     setTimeout(() => setUILocked(false), 0);
+    uiLocked = false;
+    if (activeModelButton) {
+        activeModelButton.classList.add('pressed');
+        document.querySelectorAll('.ui button').forEach(b => {
+            if (b !== activeModelButton) b.classList.remove('inactive');
+        });
+    }
 });
-
-
 
 const clickSound = new Audio('/miqtum/static/trans.wav'); // укажи путь к звуку
 clickSound.volume = 0;
@@ -411,7 +434,12 @@ flyToHome = function () {
 
     activeModelButton?.classList.remove('active-model');
     activeModelButton = null;
-
+    if (activeModelButton) activeModelButton.classList.remove('pressed');
+    document.querySelectorAll('.ui button').forEach(b => b.classList.remove('inactive'));
+    if (homeBtn) {
+        homeBtn.classList.add('pressed');
+        activeModelButton = homeBtn;
+    }
 };
 
 // Универсальная функция перелёта
