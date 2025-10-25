@@ -1,0 +1,8 @@
+{
+  "default": "/miqtum/models/eidos.glb",
+  "characters": [
+    "/miqtum/models/eidos1.glb",
+    "/miqtum/models/dragon.glb",
+    "/miqtum/models/ship.glb"
+  ]
+}

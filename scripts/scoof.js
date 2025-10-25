@@ -1,13 +1,14 @@
 import * as THREE from 'three';
-
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { loadRandomModels } from '/miqtum/scripts/utils/loadModels.js';
+
 
 let camera, scene, renderer;
 
 scene = new THREE.Scene();
 
-//const wallpaper = document.querySelector(".three_bg");
+//#region scene Lights 
 
 const directionalLight = new THREE.DirectionalLight(0xffffff, .4);
 directionalLight.position.set(100, 100, 100);
@@ -18,10 +19,38 @@ scene.add(ambientLight);
 
 const cameraLight = new THREE.PointLight(0xffffff, 2, 3, 1);
 scene.add(cameraLight);
-// cameraLight.position.set(1,1,1);
+
+//#endregion
 
 
 scene.fog = new THREE.FogExp2('MAGENTA', .08, 50);
+
+fetch('/miqtum/config/models.json')
+    .then(res => res.json())
+    .then(async data => {
+        // доступ к первому элементу массива characters
+        const modelUrl = data.characters[0];
+        const modelUrl2 = data.default;
+
+        await loadRandomModels(
+            scene,
+            modelUrl,               // ключ из JSON
+            10,                     // количество
+            3,                      // радиус
+            { x: 1, y: 0.5, z: 1 }, // множители
+            .1                     // масштаб
+        );
+
+        await loadRandomModels(
+            scene,
+            modelUrl2,               //ключ из JSON
+            10,                     // количество
+            3,                      // радиус
+            { x: 1, y: 0.5, z: 1 }, // множители
+            .1                     // масштаб
+        );
+    })
+    .catch(err => console.error('Ошибка загрузки models.json:', err));
 
 //#region ==============particles
 const buffer = new THREE.BufferGeometry();
@@ -53,9 +82,7 @@ scene.add(particles);
 //#endregion
 
 camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.25, 20);
-camera.position.set(0, 3, 10);
-// camera.lookAt(5,5,0);
-// camera.add(cameraLight);
+camera.position.set(0, 4, 10);
 
 renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(window.devicePixelRatio);
@@ -91,24 +118,10 @@ document.addEventListener('mousemove', (event) => {
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = .05;
-controls.minDistance = 2;
+controls.minDistance = 1;
 controls.maxDistance = 5;
-controls.target.set(0, .5, 0);
-controls.enablePan = false;          
-// controls.panSpeed = 0.3;
-// controls.screenSpacePanning = true; // панорамирование в плоскости экрана
-
-// // ограничение панорамирования вручную
-// const maxPanRange = .5;
-// const originalUpdate = controls.update.bind(controls);
-// controls.update = function () {
-//   originalUpdate();
-//   controls.target.clamp(
-//     new THREE.Vector3(-maxPanRange, -maxPanRange, -maxPanRange),
-//     new THREE.Vector3(maxPanRange, maxPanRange, maxPanRange)
-//   );
-// };
-
+controls.target.set(0, 1, 0);
+controls.enablePan = false;
 
 //controls.maxAzimuthAngle = THREE.MathUtils.degToRad(90);
 controls.minAzimuthAngle = THREE.MathUtils.degToRad(220);
@@ -176,7 +189,6 @@ glock.load('GLOCK.glb', function (gltf) {
     render();
 })
 
-
 window.addEventListener('resize', onWindowResize);
 
 function onWindowResize() {
@@ -218,6 +230,3 @@ let prevTime = performance.now();
 
 
 animate(prevTime);
-
-
-// animate();
