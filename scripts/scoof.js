@@ -4,37 +4,37 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 let camera, scene, renderer;
-let clock = new THREE.Clock();
 
 scene = new THREE.Scene();
 
 //const wallpaper = document.querySelector(".three_bg");
-
 
 const directionalLight = new THREE.DirectionalLight(0xffffff, .4);
 directionalLight.position.set(100, 100, 100);
 scene.add(directionalLight);
 
 const ambientLight = new THREE.AmbientLight(0x404040, 1);
-scene.add(ambientLight); 
+scene.add(ambientLight);
 
-scene.fog = new THREE.FogExp2( 'MAGENTA', .08, 50 );
+const cameraLight = new THREE.PointLight(0xffffff, 2, 3, 1);
+scene.add(cameraLight);
+// cameraLight.position.set(1,1,1);
+
+
+scene.fog = new THREE.FogExp2('MAGENTA', .08, 50);
 
 //#region ==============particles
 const buffer = new THREE.BufferGeometry();
 const vertices = [];
 const size = 33;
 
-for (let i = 0; i<999; i++){
-    const x  = (Math.random() * size + Math.random() * size)/2 - size/2;
-    const y  = (Math.random() * size + Math.random() * size)/2 - size/2;
-    const z  = (Math.random() * size + Math.random() * size)/2 - size/2;
+for (let i = 0; i < 999; i++) {
+    const x = (Math.random() * size + Math.random() * size) / 2 - size / 2;
+    const y = (Math.random() * size + Math.random() * size) / 2 - size / 2;
+    const z = (Math.random() * size + Math.random() * size) / 2 - size / 2;
 
-    vertices.push(x,y,z);
+    vertices.push(x, y, z);
 }
-
-camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.25, 20 );
-camera.position.set( 0, 5, 10 );
 
 buffer.setAttribute(
     "position",
@@ -52,16 +52,18 @@ scene.add(particles);
 
 //#endregion
 
-    
-renderer = new THREE.WebGLRenderer( { antialias: true } );
-renderer.setPixelRatio( window.devicePixelRatio );
-renderer.setSize( window.innerWidth, window.innerHeight );
-document.body.appendChild( renderer.domElement );
+camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.25, 20);
+camera.position.set(0, 3, 10);
+// camera.lookAt(5,5,0);
+// camera.add(cameraLight);
 
-  
+renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+
 //#region controls 
-
-
 let isMouseDown = false;
 let lastSpeed = 0;
 
@@ -78,7 +80,7 @@ document.addEventListener('mousemove', (event) => {
     if (isMouseDown) {
         // Обновляем текущую позицию мыши
         const deltaX = event.movementX; // Используем изменение позиции мыши с события
-        
+
         // Обновляем направление и скорость вращения в зависимости от положения мыши
         lastSpeed = deltaX * 0.01;  // Устанавливаем скорость вращения
         controls.autoRotateSpeed = lastSpeed;
@@ -86,102 +88,113 @@ document.addEventListener('mousemove', (event) => {
     }
 });
 
-const controls = new OrbitControls( camera, renderer.domElement );
-controls.enableDamping = true; 
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
 controls.dampingFactor = .05;
-controls.minDistance = 5;
+controls.minDistance = 2;
 controls.maxDistance = 5;
-controls.target.set( 0, 0, - 0.2 );
-controls.enablePan = false;
+controls.target.set(0, .5, 0);
+controls.enablePan = false;          
+// controls.panSpeed = 0.3;
+// controls.screenSpacePanning = true; // панорамирование в плоскости экрана
+
+// // ограничение панорамирования вручную
+// const maxPanRange = .5;
+// const originalUpdate = controls.update.bind(controls);
+// controls.update = function () {
+//   originalUpdate();
+//   controls.target.clamp(
+//     new THREE.Vector3(-maxPanRange, -maxPanRange, -maxPanRange),
+//     new THREE.Vector3(maxPanRange, maxPanRange, maxPanRange)
+//   );
+// };
+
 
 //controls.maxAzimuthAngle = THREE.MathUtils.degToRad(90);
 controls.minAzimuthAngle = THREE.MathUtils.degToRad(220);
 controls.minPolarAngle = THREE.MathUtils.degToRad(0);
 
-controls.autoRotateSpeed = 0.3; 
+controls.autoRotateSpeed = 0.3;
 controls.autoRotate = true;
 
 const minSpeedPositive = 0.3;
 const maxSpeedPositive = 2.0;
-const minSpeedNegative = -0.3;
-const maxSpeedNegative = -2.0; 
 
-// заменяет старые mousedown / mouseup / mousemove обработчики
 let baseSpeed = 0.3;          // базовая скорость вращения (по умолчанию)
 let lastDirection = 1;        // 1 => вправо, -1 => влево
 
 document.addEventListener('mousedown', () => {
-  isMouseDown = true;
+    isMouseDown = true;
 });
 
 document.addEventListener('mouseup', () => {
-  isMouseDown = false;
-  // вернуть постоянную базовую скорость, сохранив направление
-  controls.autoRotateSpeed = lastDirection * baseSpeed;
+    isMouseDown = false;
+    // вернуть постоянную базовую скорость, сохранив направление
+    controls.autoRotateSpeed = lastDirection * baseSpeed;
 });
 
 document.addEventListener('mousemove', (event) => {
-  if (!isMouseDown) return;
+    if (!isMouseDown) return;
 
-  const deltaX = event.movementX;
+    const deltaX = event.movementX;
 
-  // если движение по X отсутствует — не меняем направление/скорость
-  if (deltaX === 0) return;
+    // если движение по X отсутствует — не меняем направление/скорость
+    if (deltaX === 0) return;
 
-  // определяем направление по знаку движения
-  lastDirection = deltaX > 0 ? 1 : -1;
+    // определяем направление по знаку движения
+    lastDirection = deltaX > 0 ? 1 : -1;
 
-  // вычисляем новую величину скорости по модулю и ограничиваем её
-  const mag = Math.min(maxSpeedPositive, Math.max(minSpeedPositive, Math.abs(deltaX * 0.01)));
+    // вычисляем новую величину скорости по модулю и ограничиваем её
+    const mag = Math.min(maxSpeedPositive, Math.max(minSpeedPositive, Math.abs(deltaX * 0.01)));
 
-  // применяем скорость с учётом направления
-  controls.autoRotateSpeed = lastDirection * mag;
-  controls.autoRotate = true;
+    // применяем скорость с учётом направления
+    controls.autoRotateSpeed = lastDirection * mag;
+    controls.autoRotate = true;
 });
 
-controls.update(); 
+controls.update();
 
 //#endregion
- 
-const scoof = new GLTFLoader().setPath( '/miqtum/models/');
-scoof.load('SCOOF.glb', function ( gltf ) {
 
-    scene.add( gltf.scene );
+const scoof = new GLTFLoader().setPath('/miqtum/models/');
+scoof.load('SCOOF.glb', function (gltf) {
+
+    scene.add(gltf.scene);
 
     render();
 
-} ); 
+});
 
-const glock = new GLTFLoader().setPath('/scripts/miqtum/models/')
-glock.load('GLOCK.glb', function(gltf){
+const glock = new GLTFLoader().setPath('/miqtum/models/')
+glock.load('GLOCK.glb', function (gltf) {
     //glock.position.set(0, 0, 0);
-    
+
     const model = gltf.scene;
     model.position.set(0, 1, .5);
-    scene.add( gltf.scene );
+    scene.add(gltf.scene);
 
     render();
 })
 
 
-window.addEventListener( 'resize', onWindowResize );
+window.addEventListener('resize', onWindowResize);
 
 function onWindowResize() {
 
     camera.aspect = window.innerWidth / window.innerHeight;
-	camera.updateProjectionMatrix();
+    camera.updateProjectionMatrix();
 
-	renderer.setSize( window.innerWidth, window.innerHeight );
+    renderer.setSize(window.innerWidth, window.innerHeight);
 
 }
 
 function animate(time) {
     requestAnimationFrame(animate);
 
-    const delta = (time - prevTime) / 1000;
     prevTime = time;
 
-    // Здесь просто вызовите update без аргументов
+    cameraLight.position.copy(camera.position); // свет следует за камерой
+
     controls.update();
 
     render();
@@ -190,11 +203,11 @@ function animate(time) {
 
 function render() {
 
-    renderer.render( scene, camera );
+    renderer.render(scene, camera);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 10;    
-    renderer.setPixelRatio( window.devicePixelRatio );
-    renderer.setSize( window.innerWidth, window.innerHeight );
+    renderer.toneMappingExposure = 10;
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
     const canvas = renderer.domElement;
     camera.aspect = canvas.clientWidth / canvas.clientHeight;
     camera.updateProjectionMatrix();
