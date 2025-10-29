@@ -275,8 +275,6 @@ button.active-model:active {
   /* 🔸 скрыто по умолчанию */
   transition: opacity 1s ease, transform 1.5s ease;
   max-width: 600px;
-  /* 🔸 ограничиваем ширину */
-  width: 90%;
   /* адаптивно */
   line-height: 1.3;
 }
@@ -310,20 +308,22 @@ button.active-model:active {
   left: 50%;
   transform: translateX(-50%);
   width: 200px;
-  /* ✅ ограничиваем ширину */
+  /* ширина “окна” — можно 250–300 */
   overflow: hidden;
+  /* текст будет уходить за границы */
   pointer-events: none;
-  opacity: 100;
-  transition: opacity 1.5s ease;
 }
 
 .marquee__inner {
   display: inline-block;
   white-space: nowrap;
-  animation: marqueeLoop 20s linear infinite;
   will-change: transform;
+  /* анимацию добавим динамически через JS */
 }
 
+.marquee__inner.running {
+  animation: marqueeLoop 20s linear infinite;
+}
 
 .marquee__inner span {
   display: inline-block;
@@ -336,13 +336,14 @@ button.active-model:active {
 
 @keyframes marqueeLoop {
   0% {
-    transform: translateX(0);
+    transform: translateX(25%); /* текст стартует за правым краем окна */
   }
 
   100% {
-    transform: translateX(-50%);
+    transform: translateX(-100%); /* уходит полностью влево */
   }
 }
+
 
 @keyframes scrollText {
   0% {

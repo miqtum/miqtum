@@ -213,15 +213,24 @@ function animate(time) {
 }
 
 window.addEventListener('load', () => {
-    const marquee = document.getElementById('marquee');
+    const marqueeInner = document.getElementById('marquee__inner');
     const title = document.querySelector('.page-title');
-  
-    // покажем бегущую строку
-    if (marquee) marquee.style.opacity = '1';
-  
-    // и заголовок с плавным появлением
+
+    // покажем заголовок
     if (title) title.classList.add('visible');
-  });  
+
+    // запускаем бегущую строку через 1500ms после заголовка
+    setTimeout(() => {
+        if (marqueeInner) {
+            // добавляем класс — CSS начинает animation
+            marqueeInner.classList.add('running');
+        } else {
+            console.warn('marqueeInner not found');
+        }
+    }, 0);
+});
+
+console.log('load handler attached, marquee exists=', !!document.getElementById('marquee'));
 
 
 function render() {
