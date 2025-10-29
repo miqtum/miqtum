@@ -269,10 +269,23 @@ button.active-model:active {
   text-align: center;
   font-family: 'Orbitron', sans-serif;
   color: #00ffff;
-  text-shadow: 0 0 10px #00ffff;
+  text-shadow: 0 0 5px #00ffff;
   pointer-events: none;
+  opacity: 0;
+  /* 🔸 скрыто по умолчанию */
+  transition: opacity 1s ease, transform 1.5s ease;
+  max-width: 600px;
+  /* 🔸 ограничиваем ширину */
+  width: 90%;
+  /* адаптивно */
+  line-height: 1.3;
 }
 
+.page-title.visible {
+  opacity: 1;
+  transform: translate(-50%, 5px);
+  /* лёгкий “въезд” вниз */
+}
 
 .page-title h2 {
   font-size: 1rem;
@@ -296,17 +309,21 @@ button.active-model:active {
   bottom: 5px;
   left: 50%;
   transform: translateX(-50%);
-  width: 100%;
+  width: 200px;
+  /* ✅ ограничиваем ширину */
   overflow: hidden;
-  /* z-index: 1; */
   pointer-events: none;
+  opacity: 100;
+  transition: opacity 1.5s ease;
 }
 
 .marquee__inner {
   display: inline-block;
   white-space: nowrap;
   animation: marqueeLoop 20s linear infinite;
+  will-change: transform;
 }
+
 
 .marquee__inner span {
   display: inline-block;
@@ -321,6 +338,7 @@ button.active-model:active {
   0% {
     transform: translateX(0);
   }
+
   100% {
     transform: translateX(-50%);
   }
@@ -335,5 +353,5 @@ button.active-model:active {
     transform: translateX(-100%);
   }
 
-  
+
 }

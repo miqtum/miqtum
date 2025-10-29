@@ -23,7 +23,7 @@ scene.add(cameraLight);
 //#endregion
 
 
-scene.fog = new THREE.FogExp2('MAGENTA', .08, 50);
+scene.fog = new THREE.FogExp2('MAGENTA', .06, .1);
 
 fetch('/miqtum/config/models.json')
     .then(res => res.json())
@@ -211,6 +211,17 @@ function animate(time) {
 
     render();
 }
+
+window.addEventListener('load', () => {
+    const marquee = document.getElementById('marquee');
+    const title = document.querySelector('.page-title');
+  
+    // покажем бегущую строку
+    if (marquee) marquee.style.opacity = '1';
+  
+    // и заголовок с плавным появлением
+    if (title) title.classList.add('visible');
+  });  
 
 
 function render() {
