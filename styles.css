@@ -322,7 +322,7 @@ button.active-model:active {
 }
 
 .marquee__inner.running {
-  animation: marqueeLoop 20s linear infinite;
+  animation: marqueeLoop 10s linear infinite;
 }
 
 .marquee__inner span {
@@ -336,7 +336,7 @@ button.active-model:active {
 
 @keyframes marqueeLoop {
   0% {
-    transform: translateX(25%); /* текст стартует за правым краем окна */
+    transform: translateX(100%); /* текст стартует за правым краем окна */
   }
 
   100% {

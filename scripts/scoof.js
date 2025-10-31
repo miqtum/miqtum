@@ -180,13 +180,27 @@ scoof.load('SCOOF.glb', function (gltf) {
 
 const glock = new GLTFLoader().setPath('/miqtum/models/')
 glock.load('GLOCK.glb', function (gltf) {
-    //glock.position.set(0, 0, 0);
-
     const model = gltf.scene;
-    model.position.set(0, 1, .5);
+    model.position.set(.3, 1, -.1);
+    model.rotation.set(
+        0,              // X 
+        Math.PI/2,        // Y 
+        0               // Z
+    );
     scene.add(gltf.scene);
+})
 
-    render();
+const PC = new GLTFLoader().setPath('/miqtum/models/')
+glock.load('PC.glb', function (gltf) {
+    const model = gltf.scene;
+    model.position.set(0, .5, 1.2
+        );
+    model.rotation.set(
+        0,              // X 
+        Math.PI,        // Y 
+        0               // Z
+    );
+    scene.add(gltf.scene);
 })
 
 window.addEventListener('resize', onWindowResize);
