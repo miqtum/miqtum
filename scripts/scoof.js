@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { loadRandomModels } from '/miqtum/scripts/utils/loadModels.js';
+import { loadModelsCluster } from '/miqtum/scripts/utils/loadModels.js';
 import { loadModelWithPBR } from '/miqtum/scripts/utils/loader.js'
 
 let camera, scene, renderer;
@@ -23,7 +23,7 @@ scene.add(cameraLight);
 //#endregion
 
 
-scene.fog = new THREE.FogExp2('MAGENTA', .05, 1);
+scene.fog = new THREE.FogExp2('BLUE', .03, 1);
 
 //#region ==============particles
 const buffer = new THREE.BufferGeometry();
@@ -180,41 +180,40 @@ PC.load('PC.glb', function (gltf) {
 loadModelWithPBR({
     name: 'icecream',
     modelPath: '/miqtum/models/icecream/',
-    position: [1, 1, 1],
+    position: [.3, .8, .5],
     rotation: [0, 0, 0],
     scale: [1, 1, 1],
     scene
+});
+
+loadModelWithPBR({
+    name: 'joystick',
+    modelPath: '/miqtum/models/joystick/',
+    position: [-1, 1, 1],
+    rotation: [0, 0, 0],
+    scale: [1, 1, 1],
+    scene
+});
+
+
+
+loadModelsCluster({
+    scene,
+    name: 'trash',
+    modelPath: '/miqtum/models',
+    count: 20,
+    radius: 10,
+    innerRadius: 2,
+    randomY: 3,
+    scale: .5,
+    randomScale: { limit: 0 }, 
+    randomRotation: true,
+    rotationLimits: {
+      x: Math.PI / 12, 
+      y: Math.PI * 2,  
+      z: Math.PI, 
+    },
   });
-
-
-fetch('/miqtum/config/models.json')
-    .then(res => res.json())
-    .then(async data => {
-        // доступ к первому элементу массива characters
-        const modelUrl = data.default;
-        const modelUrl2 = data.characters[1];
-
-        await loadRandomModels(
-            scene,
-            modelUrl,               // ключ из JSON
-            10,                     // количество
-            3,                      // радиус
-            { x: 1, y: 1, z: 1 }, // множители
-            .2                    // масштаб
-        );
-
-        await loadRandomModels(
-            scene,
-            modelUrl2,               //ключ из JSON
-            10,                     // количество
-            3,                      // радиус
-            { x: 1, y: 0.5, z: 1 }, // множители
-            .1                     // масштаб
-        );
-    })
-    .catch(err => console.error('Ошибка загрузки models.json:', err));
-
-
 //#endregion
 
 

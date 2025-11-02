@@ -1,54 +1,76 @@
+import { loadModelWithPBR } from './loader.js';
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-
-// === Простой кэш моделей (глобально внутри модуля) ===
-const modelCache = new Map();
 
 /**
- * Загружает несколько копий GLTF-модели и случайно размещает их вокруг центра сцены.
- * Использует кэш, чтобы не перезагружать один и тот же файл.
+ * Загружает несколько копий модели в случайных позициях вокруг центра.
  *
- * @param {THREE.Scene} scene - сцена, куда добавляем модели
- * @param {string} modelUrl - путь к .glb модели
- * @param {number} count - количество копий модели
- * @param {number} radius - радиус разброса вокруг центра
- * @param {Object} multipliers - множители разброса по осям {x, y, z}
- * @param {number} scaleMult - множитель масштаба
+ * @param {Object} options
+ * @param {string} options.name - имя модели
+ * @param {string} options.modelPath - путь к папке модели
+ * @param {THREE.Scene} options.scene - сцена
+ * @param {number} [options.count=10] - количество экземпляров
+ * @param {number} [options.radius=10] - внешний радиус разброса
+ * @param {number} [options.innerRadius=0] - внутренний радиус (внутрь не спавнить)
+ * @param {number} [options.scale=1] - базовый масштаб
+ * @param {boolean|Object} [options.randomScale=false] - включить рандомный масштаб (объект с лимитом или true)
+ * @param {boolean} [options.randomRotation=true] - включить случайное вращение
+ * @param {Object} [options.rotationLimits={x:0,y:Math.PI*2,z:0}] - ограничения вращения по осям
+ * @param {number} [options.randomY=0] - максимальное отклонение по высоте (вверх/вниз)
  */
-export async function loadRandomModels(
+export async function loadModelsCluster({
+  name,
+  modelPath,
   scene,
-  modelUrl,
   count = 10,
-  radius = 3,
-  multipliers = { x: 1, y: 0.5, z: 1 },
-  scaleMult = 1
-) {
-  const loader = new GLTFLoader();
-
-  // === проверка кэша ===
-  let gltf;
-  if (modelCache.has(modelUrl)) {
-    gltf = modelCache.get(modelUrl);
-  } else {
-    gltf = await loader.loadAsync(modelUrl);
-    modelCache.set(modelUrl, gltf);
-  }
+  radius = 10,
+  innerRadius = 0,
+  scale = 1,
+  randomScale = false, // можно true или { limit: 0.3 }
+  randomRotation = true,
+  rotationLimits = { x: 0, y: Math.PI * 2, z: 0 },
+  randomY = 0,
+}) {
+  // определяем лимит для масштаба
+  const scaleLimit = typeof randomScale === 'object' && randomScale.limit ? randomScale.limit : 0.25;
 
   for (let i = 0; i < count; i++) {
-    const clone = gltf.scene.clone(true);
+    // Случайная точка в кольце между innerRadius и radius
+    const angle = Math.random() * Math.PI * 2;
+    const dist = Math.sqrt(
+      Math.random() * (radius * radius - innerRadius * innerRadius) + innerRadius * innerRadius
+    );
 
-    // случайные координаты
-    const x = (Math.random() - 0.5) * radius * 2 * multipliers.x;
-    const y = (Math.random() - 0.5) * radius * multipliers.y;
-    const z = (Math.random() - 0.5) * radius * 2 * multipliers.z;
+    const x = Math.cos(angle) * dist;
+    const z = Math.sin(angle) * dist;
+    const y = (Math.random() - 0.5) * 2 * randomY; // разброс по высоте
 
-    clone.position.set(x, y, z);
-    clone.rotation.y = Math.random() * Math.PI * 2;
+    // Рандомное вращение с ограничениями
+    const rotation = randomRotation
+      ? [
+          (Math.random() - 0.5) * 2 * rotationLimits.x,
+          (Math.random() - 0.5) * 2 * rotationLimits.y,
+          (Math.random() - 0.5) * 2 * rotationLimits.z,
+        ]
+      : [0, 0, 0];
 
-    // масштаб
-    const s = scaleMult * (0.8 + Math.random() * 0.4);
-    clone.scale.set(s, s, s);
+    // Рандомный масштаб
+    const scaleValue = randomScale
+      ? scale * (1 + (Math.random() - 0.5) * 2 * scaleLimit)
+      : scale;
 
-    scene.add(clone);
+    await loadModelWithPBR({
+      name,
+      modelPath,
+      position: [x, y, z],
+      rotation,
+      scale: [scaleValue, scaleValue, scaleValue],
+      scene,
+    });
   }
+
+  console.log(
+    `✅ Cluster of "${name}" loaded (${count} models, inner radius ${innerRadius}, randomScale=${
+      randomScale ? 'on' : 'off'
+    })`
+  );
 }

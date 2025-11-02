@@ -1,20 +1,35 @@
+// loader.js
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
+/**
+ * Универсальный загрузчик GLTF/GLB моделей с PBR-текстурами.
+ * 
+ * Автоматически определяет формат (.gltf / .glb),
+ * подгружает карты (basecolor, normal, roughness, metallic, emissive, ao, displacement)
+ * и корректно применяет их к оригинальному материалу модели.
+ * 
+ * @param {Object} options
+ * @param {string} options.name - имя модели (без расширения)
+ * @param {string} options.modelPath - путь к папке модели
+ * @param {THREE.Scene} options.scene - сцена для добавления
+ * @param {number[]} [options.position=[0,0,0]]
+ * @param {number[]} [options.rotation=[0,0,0]]
+ * @param {number[]} [options.scale=[1,1,1]]
+ * @returns {Promise<THREE.Group>} - возвращает загруженный объект
+ */
 export async function loadModelWithPBR({
   name,
-  extension = 'gltf',
   modelPath,
+  scene,
   position = [0, 0, 0],
   rotation = [0, 0, 0],
   scale = [1, 1, 1],
-  scene,
 }) {
   const loader = new GLTFLoader();
   const texLoader = new THREE.TextureLoader();
-  
 
-  // --- список карт, которые пытаемся загрузить (по универсальной схеме) ---
+  // --- список возможных карт ---
   const maps = {
     basecolor: `${modelPath}/tex/${name}_BaseColor.png`,
     normal: `${modelPath}/tex/${name}_Normal.png`,
@@ -27,10 +42,10 @@ export async function loadModelWithPBR({
 
   const materialMaps = {};
 
-  // --- пробуем загрузить каждую карту (если нет — просто пропускаем) ---
+  // --- загружаем все карты (без кэширования, безопасно) ---
   for (const [key, url] of Object.entries(maps)) {
     try {
-      const texture = await new Promise((resolve, reject) => {
+      const texture = await new Promise((resolve) => {
         texLoader.load(
           url,
           (t) => resolve(t),
@@ -45,7 +60,6 @@ export async function loadModelWithPBR({
       if (texture) {
         texture.flipY = false;
         if (key === 'basecolor' || key === 'emissive') {
-          // для корректной гаммы
           texture.colorSpace = THREE.SRGBColorSpace;
         }
         materialMaps[key] = texture;
@@ -56,8 +70,19 @@ export async function loadModelWithPBR({
     }
   }
 
-  // --- загружаем саму модель ---
-  const gltf = await loader.loadAsync(`${modelPath}/${name}.${extension}`);
+  // --- автоопределение формата .gltf или .glb ---
+  let modelFile = `${modelPath}/${name}.gltf`;
+  try {
+    const response = await fetch(modelFile, { method: 'HEAD' });
+    if (!response.ok) throw new Error();
+  } catch {
+    modelFile = `${modelPath}/${name}.glb`;
+  }
+
+  console.log(`📦 loading model: ${modelFile}`);
+
+  // --- загружаем модель ---
+  const gltf = await loader.loadAsync(modelFile);
   const model = gltf.scene;
 
   model.traverse((obj) => {
@@ -69,7 +94,7 @@ export async function loadModelWithPBR({
         obj.geometry.setAttribute('uv2', obj.geometry.attributes.uv);
       }
 
-      // добавляем найденные карты к существующему материалу
+      // добавляем найденные карты
       if (materialMaps.basecolor) mat.map = materialMaps.basecolor;
       if (materialMaps.normal) mat.normalMap = materialMaps.normal;
       if (materialMaps.roughness) mat.roughnessMap = materialMaps.roughness;
@@ -95,6 +120,5 @@ export async function loadModelWithPBR({
 
   scene.add(model);
   console.log(`🧩 Model "${name}" added to scene`);
-
   return model;
 }
