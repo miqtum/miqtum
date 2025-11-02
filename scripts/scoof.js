@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { loadRandomModels } from '/miqtum/scripts/utils/loadModels.js';
-
+import { loadModelWithPBR } from '/miqtum/scripts/utils/loader.js'
 
 let camera, scene, renderer;
 
@@ -23,34 +23,7 @@ scene.add(cameraLight);
 //#endregion
 
 
-scene.fog = new THREE.FogExp2('MAGENTA', .06, .1);
-
-fetch('/miqtum/config/models.json')
-    .then(res => res.json())
-    .then(async data => {
-        // доступ к первому элементу массива characters
-        const modelUrl = data.characters[0];
-        const modelUrl2 = data.default;
-
-        await loadRandomModels(
-            scene,
-            modelUrl,               // ключ из JSON
-            10,                     // количество
-            3,                      // радиус
-            { x: 1, y: 0.5, z: 1 }, // множители
-            .1                     // масштаб
-        );
-
-        await loadRandomModels(
-            scene,
-            modelUrl2,               //ключ из JSON
-            10,                     // количество
-            3,                      // радиус
-            { x: 1, y: 0.5, z: 1 }, // множители
-            .1                     // масштаб
-        );
-    })
-    .catch(err => console.error('Ошибка загрузки models.json:', err));
+scene.fog = new THREE.FogExp2('MAGENTA', .05, 1);
 
 //#region ==============particles
 const buffer = new THREE.BufferGeometry();
@@ -169,14 +142,15 @@ controls.update();
 
 //#endregion
 
+//#region models 
+
 const scoof = new GLTFLoader().setPath('/miqtum/models/');
 scoof.load('SCOOF.glb', function (gltf) {
 
     scene.add(gltf.scene);
 
-    render();
-
 });
+
 
 const glock = new GLTFLoader().setPath('/miqtum/models/')
 glock.load('GLOCK.glb', function (gltf) {
@@ -184,17 +158,17 @@ glock.load('GLOCK.glb', function (gltf) {
     model.position.set(.3, 1, -.1);
     model.rotation.set(
         0,              // X 
-        Math.PI/2,        // Y 
+        Math.PI / 2,        // Y 
         0               // Z
     );
     scene.add(gltf.scene);
 })
 
 const PC = new GLTFLoader().setPath('/miqtum/models/')
-glock.load('PC.glb', function (gltf) {
+PC.load('PC.glb', function (gltf) {
     const model = gltf.scene;
     model.position.set(0, .5, 1.2
-        );
+    );
     model.rotation.set(
         0,              // X 
         Math.PI,        // Y 
@@ -202,6 +176,47 @@ glock.load('PC.glb', function (gltf) {
     );
     scene.add(gltf.scene);
 })
+
+loadModelWithPBR({
+    name: 'icecream',
+    modelPath: '/miqtum/models/icecream/',
+    position: [1, 1, 1],
+    rotation: [0, 0, 0],
+    scale: [1, 1, 1],
+    scene
+  });
+
+
+fetch('/miqtum/config/models.json')
+    .then(res => res.json())
+    .then(async data => {
+        // доступ к первому элементу массива characters
+        const modelUrl = data.default;
+        const modelUrl2 = data.characters[1];
+
+        await loadRandomModels(
+            scene,
+            modelUrl,               // ключ из JSON
+            10,                     // количество
+            3,                      // радиус
+            { x: 1, y: 1, z: 1 }, // множители
+            .2                    // масштаб
+        );
+
+        await loadRandomModels(
+            scene,
+            modelUrl2,               //ключ из JSON
+            10,                     // количество
+            3,                      // радиус
+            { x: 1, y: 0.5, z: 1 }, // множители
+            .1                     // масштаб
+        );
+    })
+    .catch(err => console.error('Ошибка загрузки models.json:', err));
+
+
+//#endregion
+
 
 window.addEventListener('resize', onWindowResize);
 
@@ -261,6 +276,5 @@ function render() {
 }
 
 let prevTime = performance.now();
-
 
 animate(prevTime);
