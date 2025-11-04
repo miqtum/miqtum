@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { loadModelWithPBR, loadMultMeshWithPBR, loadScatteredInstances } from '/miqtum/scripts/utils/loaders.js'
+import { loadModelsCluster } from '/miqtum/scripts/utils/loaders_test.js'
+
 
 let camera, scene, renderer;
 
@@ -143,11 +145,14 @@ controls.update();
 
 //#region models 
 
-const scoof = new GLTFLoader().setPath('/miqtum/models/');
-scoof.load('SCOOF.glb', function (gltf) {
-
-    scene.add(gltf.scene);
-
+//SCOOF
+loadModelWithPBR({
+    name: 'SCOOF',
+    modelPath: '/miqtum/models/',
+    position: [0, 0, 0],
+    rotation: [0, 0, 0],
+    scale: [1, 1, 1],
+    scene
 });
 
 //pistol
@@ -160,6 +165,7 @@ loadModelWithPBR({
     scene
 });
 
+//PC
 const PC = new GLTFLoader().setPath('/miqtum/models/')
 PC.load('PC.glb', function (gltf) {
     const model = gltf.scene;
@@ -194,44 +200,51 @@ loadModelWithPBR({
 // });
 
 //trash packets
-loadScatteredInstances({
-    name: 'trash',
-    modelPath: '/miqtum/models',
-    scene,
-    count: 20,
-    spread: { x: 6, y: 2, z: 6 },
-    innerRadius: 2,
-    scale: .5,
-    randomScale: { limit: 0 },
-    randomRotation: true,
-    rotationLimits: { x: 45, y: 180, z: 45 },
-});
+// loadScatteredInstances({
+//     name: 'trash',
+//     modelPath: '/miqtum/models',
+//     scene,
+//     count: 20,
+//     spread: { x: 6, y: 2, z: 6 },
+//     innerRadius: 2,
+//     scale: .5,
+//     randomScale: { limit: 0 },
+//     randomRotation: true,
+//     rotationLimits: { x: 45, y: 180, z: 45 },
+// });
 
 
 //garbage_objs
-loadMultMeshWithPBR ({
-    name: 'garbage_objs',
-    modelPath: '/miqtum/models/garbage_objs',
-    scene,
-    spread: { x: 1, y: 1, z: 1 },
-    innerRadius: 1,
-    scale: 1.0,
-    randomScale: false,
-    scaleLimit: 0.4,          // ±40%
-    randomRotation: true,
-    rotationLimits: { x: 15, y: 180, z: 15 }, // в градусах
-  });
-
-
-//=============test
-// loadModelWithPBR({
-//     name: 'COKE',
-//     modelPath: '/miqtum/models/garbage_2/',
-//     position: [.3, .8, .5],
-//     rotation: [0, 0, 0],
-//     scale: [10, 10, 10],
-//     scene
+// loadMultMeshWithPBR({
+//     name: 'garbage_objs',
+//     modelPath: '/miqtum/models/garbage_objs',
+//     scene,
+//     spread: { x: 1, y: 1, z: 1 },
+//     innerRadius: 1.2,
+//     scale: 1.0,
+//     randomScale: false,
+//     scaleLimit: 0.4,          // ±40%
+//     randomRotation: true,
+//     rotationLimits: { x: 15, y: 180, z: 15 }, // в градусах
 // });
+
+
+
+loadModelsCluster({
+    name: 'trash', // имя модели без расширения (.gltf / .glb)
+    modelPath: '/miqtum/models', // путь к папке с моделью и текстурами
+    scene, // твоя сцена THREE.Scene
+    count: 25, // количество копий
+    spread: { x: 4, y: 2, z: 4 }, // разброс по осям X, Y, Z
+    innerRadius: 2, // внутрь радиуса 4 не спавнить
+    scale: .5, // базовый масштаб
+    minDistance: .1,
+    randomScale: { limit: 0}, // рандомный масштаб ±30%
+    randomRotation: true, // включить случайное вращение
+    rotationLimits: { x: 15, y: 360, z: 15 }, // лимиты вращения в градусах
+});
+
+
 
 //#endregion
 
