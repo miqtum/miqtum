@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { loadModelWithPBR, loadMultMeshWithPBR, loadScatteredInstances } from '/miqtum/scripts/utils/loaders.js'
+import { loadModelWithPBR, loadMultMeshWithPBR, loadScatteredInstances, loadGLBModel } from '/miqtum/scripts/utils/loaders.js'
 import { loadModelsCluster } from '/miqtum/scripts/utils/loaders_test.js'
 
 
@@ -215,18 +215,18 @@ loadModelWithPBR({
 
 
 //garbage_objs
-// loadMultMeshWithPBR({
-//     name: 'garbage_objs',
-//     modelPath: '/miqtum/models/garbage_objs',
-//     scene,
-//     spread: { x: 1, y: 1, z: 1 },
-//     innerRadius: 1.2,
-//     scale: 1.0,
-//     randomScale: false,
-//     scaleLimit: 0.4,          // ±40%
-//     randomRotation: true,
-//     rotationLimits: { x: 15, y: 180, z: 15 }, // в градусах
-// });
+loadMultMeshWithPBR({
+    name: 'garbage_objs',
+    modelPath: '/miqtum/models/garbage_objs',
+    scene,
+    spread: { x: 1, y: 1, z: 1 },
+    innerRadius: 1.2,
+    scale: 1.0,
+    randomScale: false,
+    scaleLimit: 0.4,          // ±40%
+    randomRotation: true,
+    rotationLimits: { x: 15, y: 180, z: 15 }, // в градусах
+});
 
 
 
@@ -236,15 +236,24 @@ loadModelsCluster({
     scene, // твоя сцена THREE.Scene
     count: 25, // количество копий
     spread: { x: 4, y: 2, z: 4 }, // разброс по осям X, Y, Z
-    innerRadius: 2, // внутрь радиуса 4 не спавнить
-    scale: .5, // базовый масштаб
-    minDistance: .1,
-    randomScale: { limit: 0}, // рандомный масштаб ±30%
+    innerRadius: 1, // внутрь радиуса 4 не спавнить
+    scale: .3, // базовый масштаб    
+    randomScale: { limit: 0 }, // рандомный масштаб ±30%
     randomRotation: true, // включить случайное вращение
-    rotationLimits: { x: 15, y: 360, z: 15 }, // лимиты вращения в градусах
+    rotationLimits: { x: 15, y: 360, z: 45 }, // лимиты вращения в градусах
 });
 
 
+// допустим у тебя уже создана сцена THREE.Scene()
+loadGLBModel({
+    modelPath: '/miqtum/models',
+    name: 'iphone',
+    scene,
+    position: [.3, 1, 0],
+    rotation: [0, 250, 0], // в градусах
+    scale: 1
+    ,
+});
 
 //#endregion
 

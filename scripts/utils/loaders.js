@@ -342,3 +342,72 @@ export async function loadScatteredInstances({
     `✅ Cluster "${name}" loaded (${count} models, spread=${JSON.stringify(spread)}, innerRadius=${innerRadius}, randomScale=${!!randomScale}, randomRotation=${!!randomRotation})`
   );
 }
+
+/**
+ * Загружает одну .glb модель в сцену с текстурами.
+ * 
+ * @param {Object} options
+ * @param {string} options.modelPath - путь к папке с моделью (например '/miqtum/models')
+ * @param {string} options.name - имя файла модели без расширения (например 'iphone')
+ * @param {THREE.Scene} options.scene - объект сцены, куда добавить модель
+ * @param {number[]} [options.position=[0,0,0]] - позиция модели (x, y, z)
+ * @param {number[]} [options.rotation=[0,0,0]] - вращение в градусах (x, y, z)
+ * @param {number} [options.scale=1] - единый множитель масштаба
+ * 
+ * @returns {Promise<THREE.Group>} - промис с добавленной моделью
+ */
+export async function loadGLBModel({
+  modelPath,
+  name,
+  scene,
+  position = [0, 0, 0],
+  rotation = [0, 0, 0],
+  scale = 1,
+}) {
+  if (!scene) {
+    throw new Error('❌ Не передана сцена (scene) для добавления модели.');
+  }
+
+  const loader = new GLTFLoader();
+  const filePath = `${modelPath}/${name}.glb`;
+
+  console.log(`📦 Загрузка модели: ${filePath}`);
+
+  const gltf = await loader.loadAsync(filePath);
+  const model = gltf.scene;
+
+  // --- применяем трансформации ---
+  model.position.set(...position);
+
+  const degToRad = (deg) => (deg * Math.PI) / 180;
+  model.rotation.set(
+    degToRad(rotation[0]),
+    degToRad(rotation[1]),
+    degToRad(rotation[2])
+  );
+
+  model.scale.set(scale, scale, scale);
+
+  // --- корректно настраиваем материалы (если есть текстуры) ---
+  model.traverse((obj) => {
+    if (obj.isMesh && obj.material) {
+      const mat = obj.material;
+      mat.side = THREE.DoubleSide; // рендерить обе стороны (на случай неполных нормалей)
+
+      // авто-детект sRGB
+      if (mat.map) mat.map.colorSpace = THREE.SRGBColorSpace;
+      if (mat.emissiveMap) mat.emissiveMap.colorSpace = THREE.SRGBColorSpace;
+
+      // для корректного отображения PBR
+      if (mat.normalMap) mat.normalMap.flipY = false;
+      if (mat.map) mat.map.flipY = false;
+      mat.needsUpdate = true;
+    }
+  });
+
+  // --- добавляем в сцену ---
+  scene.add(model);
+
+  console.log(`✅ Модель "${name}" добавлена в сцену`);
+  return model;
+}
