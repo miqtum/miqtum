@@ -2,8 +2,10 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { loadModelWithPBR, loadMultMeshWithPBR, loadScatteredInstances, loadGLBModel } from '/miqtum/scripts/utils/loaders.js'
-import { loadModelsCluster } from '/miqtum/scripts/utils/loaders_test.js'
-
+// import { loadModelsCluster } from '/miqtum/scripts/utils/loaders_test.js'
+import {
+    highlightAndDelete
+} from '/miqtum/scripts/utils/selectors.js';
 
 let camera, scene, renderer;
 
@@ -11,14 +13,14 @@ scene = new THREE.Scene();
 
 //#region scene Lights 
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, .4);
-directionalLight.position.set(100, 100, 100);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
+directionalLight.position.set(0, 25, 25);
 scene.add(directionalLight);
 
-const ambientLight = new THREE.AmbientLight(0x404040, 1);
+const ambientLight = new THREE.AmbientLight(0x404040, 2);
 scene.add(ambientLight);
 
-const cameraLight = new THREE.PointLight(0xffffff, 2, 3, 1);
+const cameraLight = new THREE.PointLight(0xffffff, 4, 3, 1);
 scene.add(cameraLight);
 
 //#endregion
@@ -50,7 +52,7 @@ const prtclsMaterial = new THREE.PointsMaterial({
 });
 
 const particles = new THREE.Points(buffer, prtclsMaterial);
-
+particles.name = 'particles';
 scene.add(particles);
 
 //#endregion
@@ -166,30 +168,26 @@ loadModelWithPBR({
 });
 
 //PC
-const PC = new GLTFLoader().setPath('/miqtum/models/')
-PC.load('PC.glb', function (gltf) {
-    const model = gltf.scene;
-    model.position.set(0, .5, 1.2
-    );
-    model.rotation.set(
-        0,              // X 
-        Math.PI,        // Y 
-        0               // Z
-    );
-    scene.add(gltf.scene);
+loadModelWithPBR({
+    name: 'PC',
+    modelPath: '/miqtum/models/',
+    position: [0, 0.5, 1.5],
+    rotation: [0, 22, 0],
+    scale: [1, 1, 1],
+    scene
 });
 
 //icecream
 loadModelWithPBR({
     name: 'icecream',
     modelPath: '/miqtum/models/icecream/',
-    position: [.3, .8, .5],
+    position: [0, .8, .3],
     rotation: [0, 0, 0],
-    scale: [1, 1, 1],
+    scale: [2, 2, 2],
     scene
 });
 
-//joystick
+//trash
 // loadModelWithPBR({
 //     name: 'joystick',
 //     modelPath: '/miqtum/models/joystick/',
@@ -200,18 +198,18 @@ loadModelWithPBR({
 // });
 
 //trash packets
-// loadScatteredInstances({
-//     name: 'trash',
-//     modelPath: '/miqtum/models',
-//     scene,
-//     count: 20,
-//     spread: { x: 6, y: 2, z: 6 },
-//     innerRadius: 2,
-//     scale: .5,
-//     randomScale: { limit: 0 },
-//     randomRotation: true,
-//     rotationLimits: { x: 45, y: 180, z: 45 },
-// });
+loadScatteredInstances({
+    name: 'trash',
+    modelPath: '/miqtum/models',
+    scene,
+    count: 20,
+    spread: { x: 6, y: 2, z: 6 },
+    innerRadius: 2,
+    scale: .5,
+    randomScale: { limit: 0 },
+    randomRotation: true,
+    rotationLimits: { x: 45, y: 180, z: 45 },
+});
 
 
 //garbage_objs
@@ -228,23 +226,21 @@ loadMultMeshWithPBR({
     rotationLimits: { x: 15, y: 180, z: 15 }, // в градусах
 });
 
+//trash
+// loadModelsCluster({
+//     name: 'trash', // имя модели без расширения (.gltf / .glb)
+//     modelPath: '/miqtum/models', // путь к папке с моделью и текстурами
+//     scene, // твоя сцена THREE.Scene
+//     count: 25, // количество копий
+//     spread: { x: 4, y: 2, z: 4 }, // разброс по осям X, Y, Z
+//     innerRadius: 1, // внутрь радиуса 4 не спавнить
+//     scale: .3, // базовый масштаб    
+//     randomScale: { limit: 0 }, // рандомный масштаб 
+//     randomRotation: true, // включить случайное вращение
+//     rotationLimits: { x: 15, y: 360, z: 45 }, // лимиты вращения в градусах
+// });
 
-
-loadModelsCluster({
-    name: 'trash', // имя модели без расширения (.gltf / .glb)
-    modelPath: '/miqtum/models', // путь к папке с моделью и текстурами
-    scene, // твоя сцена THREE.Scene
-    count: 25, // количество копий
-    spread: { x: 4, y: 2, z: 4 }, // разброс по осям X, Y, Z
-    innerRadius: 1, // внутрь радиуса 4 не спавнить
-    scale: .3, // базовый масштаб    
-    randomScale: { limit: 0 }, // рандомный масштаб ±30%
-    randomRotation: true, // включить случайное вращение
-    rotationLimits: { x: 15, y: 360, z: 45 }, // лимиты вращения в градусах
-});
-
-
-// допустим у тебя уже создана сцена THREE.Scene()
+// iphone lgb
 loadGLBModel({
     modelPath: '/miqtum/models',
     name: 'iphone',
@@ -256,6 +252,14 @@ loadGLBModel({
 });
 
 //#endregion
+
+//clicker
+const highlighter = highlightAndDelete({
+    renderer,
+    scene,
+    camera,
+    except: [ 'particles', 'PC', 'SCOOF_sitting']
+});
 
 window.addEventListener('resize', onWindowResize);
 
@@ -278,6 +282,7 @@ function animate(time) {
     controls.update();
 
     render();
+
 }
 
 window.addEventListener('load', () => {
@@ -302,16 +307,15 @@ console.log('load handler attached, marquee exists=', !!document.getElementById(
 
 
 function render() {
-
-    renderer.render(scene, camera);
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 10;
+    highlighter.render();
+    // renderer.render(scene, camera);
+    // renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1;
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
     const canvas = renderer.domElement;
     camera.aspect = canvas.clientWidth / canvas.clientHeight;
     camera.updateProjectionMatrix();
-
 }
 
 let prevTime = performance.now();

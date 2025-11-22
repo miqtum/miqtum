@@ -321,10 +321,10 @@ export async function loadScatteredInstances({
     const degToRad = (deg) => (deg * Math.PI) / 180;
     const rotation = randomRotation
       ? [
-          degToRad((Math.random() - 0.5) * 2 * rotationLimits.x),
-          degToRad((Math.random() - 0.5) * 2 * rotationLimits.y),
-          degToRad((Math.random() - 0.5) * 2 * rotationLimits.z),
-        ]
+        degToRad((Math.random() - 0.5) * 2 * rotationLimits.x),
+        degToRad((Math.random() - 0.5) * 2 * rotationLimits.y),
+        degToRad((Math.random() - 0.5) * 2 * rotationLimits.z),
+      ]
       : [0, 0, 0];
 
     // Загружаем экземпляр
