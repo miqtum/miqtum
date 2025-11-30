@@ -3,10 +3,6 @@
 		"generator":"Khronos glTF Blender I/O v4.0.43",
 		"version":"2.0"
 	},
-	"extensionsUsed":[
-		"KHR_materials_specular",
-		"KHR_materials_ior"
-	],
 	"scene":0,
 	"scenes":[
 		{
@@ -60,7 +56,48 @@
 					"tree_name":""
 				},
 				"csdf":{},
-				"handy_weight_edit_props":{}
+				"handy_weight_edit_props":{},
+				"batch_export":{
+					"directory":"//COSMO_LONLINESS\\ASSETS\\trash_objs\\garbage\\",
+					"mode":1,
+					"gltf_preset":"glTF_sep_jpg_noUV",
+					"object_types":1,
+					"limit":2,
+					"file_format":6
+				},
+				"cl_settings":{
+					"cl_selected_mode":"SELECTION STATE",
+					"cl_running_bool":1,
+					"cl_menuact_str":""
+				},
+				"gizmo_show_hide":1,
+				"uvpm3_props":{
+					"scripted_props":{},
+					"heuristic_enable":1,
+					"pixel_margin_enable":1,
+					"pixel_margin_tex_size":4096,
+					"lock_overlapping_enable":0,
+					"normalize_islands":1,
+					"fixed_scale":1,
+					"fixed_scale_strategy":2,
+					"rotation_enable":1,
+					"pre_rotation_disable":1,
+					"island_rot_step_enable":1,
+					"numbered_groups_descriptors":{
+						"stack_group":{},
+						"lock_group":{},
+						"track_group":{}
+					}
+				},
+				"TT_bake_mode":4,
+				"ve_edit":{},
+				"keentools_gt_settings":{},
+				"keentools_fb_settings":{},
+				"bc":{
+					"snap":{
+						"hit":false
+					}
+				}
 			},
 			"name":"Scene",
 			"nodes":[
@@ -71,69 +108,43 @@
 	"nodes":[
 		{
 			"extras":{
-				"MM":{}
+				"MM":{},
+				"speedretopo_ref_object":{}
 			},
 			"mesh":0,
-			"name":"joystick",
-			"rotation":[
-				0.7071067690849304,
-				0,
-				0,
-				0.7071068286895752
-			],
-			"scale":[
-				0.0007587719010189176,
-				0.0007587719010189176,
-				0.0007587719010189176
-			],
-			"translation":[
-				0,
-				0.13326318562030792,
-				0
-			]
+			"name":"PC"
 		}
 	],
 	"materials":[
 		{
 			"doubleSided":true,
-			"extensions":{
-				"KHR_materials_specular":{
-					"specularFactor":0
-				},
-				"KHR_materials_ior":{
-					"ior":1.4500000476837158
-				}
-			},
 			"extras":{
 				"yp":{
 					"active_ypaint_node":""
 				}
 			},
-			"name":"object_0.017",
-			"normalTexture":{
-				"index":0
-			},
+			"name":"PC_mat",
 			"pbrMetallicRoughness":{
 				"baseColorTexture":{
-					"index":1
+					"index":0
 				},
-				"metallicRoughnessTexture":{
-					"index":2
-				}
+				"metallicFactor":0,
+				"roughnessFactor":0.5
 			}
 		}
 	],
 	"meshes":[
 		{
-			"name":"model",
+			"name":"Cube.009",
 			"primitives":[
 				{
 					"attributes":{
 						"POSITION":0,
 						"NORMAL":1,
-						"TEXCOORD_0":2
+						"TEXCOORD_0":2,
+						"TEXCOORD_1":3
 					},
-					"indices":3,
+					"indices":4,
 					"material":0
 				}
 			]
@@ -143,92 +154,86 @@
 		{
 			"sampler":0,
 			"source":0
-		},
-		{
-			"sampler":0,
-			"source":1
-		},
-		{
-			"sampler":0,
-			"source":2
 		}
 	],
 	"images":[
 		{
 			"mimeType":"image/jpeg",
-			"name":"joystick_Normal",
-			"uri":"joystick_Normal.jpg"
-		},
-		{
-			"mimeType":"image/jpeg",
-			"name":"joystick_BaseColor",
-			"uri":"joystick_BaseColor.jpg"
-		},
-		{
-			"mimeType":"image/jpeg",
-			"name":"joystick_Metallic-joystick_Roughness",
-			"uri":"joystick_Metallic-joystick_Roughness.jpg"
+			"name":"pc_base_color",
+			"uri":"pc_base_color.jpg"
 		}
 	],
 	"accessors":[
 		{
 			"bufferView":0,
 			"componentType":5126,
-			"count":1360,
+			"count":4683,
 			"max":[
-				225.42494201660156,
-				32.67950439453125,
-				171.79261779785156
+				0.5586550235748291,
+				0.777642548084259,
+				0.8784232139587402
 			],
 			"min":[
-				-225.44931030273438,
-				-162.16879272460938,
-				-116.16187286376953
+				-0.5934035778045654,
+				-0.010231755673885345,
+				-0.29835638403892517
 			],
 			"type":"VEC3"
 		},
 		{
 			"bufferView":1,
 			"componentType":5126,
-			"count":1360,
+			"count":4683,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":2,
 			"componentType":5126,
-			"count":1360,
+			"count":4683,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":3,
+			"componentType":5126,
+			"count":4683,
+			"type":"VEC2"
+		},
+		{
+			"bufferView":4,
 			"componentType":5123,
-			"count":4728,
+			"count":17214,
 			"type":"SCALAR"
 		}
 	],
 	"bufferViews":[
 		{
 			"buffer":0,
-			"byteLength":16320,
+			"byteLength":56196,
 			"byteOffset":0,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":16320,
-			"byteOffset":16320,
+			"byteLength":56196,
+			"byteOffset":56196,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":10880,
-			"byteOffset":32640,
+			"byteLength":37464,
+			"byteOffset":112392,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":9456,
-			"byteOffset":43520,
+			"byteLength":37464,
+			"byteOffset":149856,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":34428,
+			"byteOffset":187320,
 			"target":34963
 		}
 	],
@@ -240,8 +245,8 @@
 	],
 	"buffers":[
 		{
-			"byteLength":52976,
-			"uri":"joystick.bin"
+			"byteLength":221748,
+			"uri":"PC.bin"
 		}
 	]
 }
