@@ -2,22 +2,22 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import {
     loadGLBModel,
-    loadAnimatedModelSimple,
-    // loadModelWthAnimTex,
-    // ModelWthAnimTexUtils,
-    loadAnimatedModelByMaterial,
+    loadAnimatedTexByMaterial, AnimatedTexUtils,
     randomScatterGLB,
-    randomScatterInstances
+    randomScatterInstances,
+    AnimationManager
 } from '/miqtum/scripts/utils/loaders.js'
 import {
     highlightAndDelete
 } from '/miqtum/scripts/utils/selectors.js';
 
+
+
 let camera, scene, renderer;
 
 scene = new THREE.Scene();
 
-//#region scene Lights 
+//#region ========SCEENE SETUP============= 
 
 const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
 directionalLight.position.set(0, 25, 25);
@@ -28,11 +28,16 @@ scene.add(ambientLight);
 
 const cameraLight = new THREE.PointLight(0xffffff, 8, 3, 1);
 scene.add(cameraLight);
-
-//#endregion
-
-
 scene.fog = new THREE.FogExp2('BLUE', .05, 1);
+
+camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.25, 20);
+camera.position.set(0, 4, 10);
+
+renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+//#endregion
 
 //#region ==============particles
 const buffer = new THREE.BufferGeometry();
@@ -62,15 +67,6 @@ particles.name = 'particles';
 scene.add(particles);
 
 //#endregion
-
-camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.25, 20);
-camera.position.set(0, 4, 10);
-
-renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setPixelRatio(window.devicePixelRatio);
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
-
 
 //#region controls 
 let isMouseDown = false;
@@ -197,17 +193,16 @@ loadGLBModel({
     ,
 });
 
-
 //trash packets
 randomScatterInstances({
-    url: "/miqtum/models/trash.glb",
+    url: "/miqtum/models/trash_black.glb",
     scene,
     count: 20,
     minRadius: 2,
     maxRadius: 3,
     maxHeight: 3,
-    rotationLimits: { x: 0, y: 180, z: 0 },
-    scaleLimits: { min: .2, max: .5 }
+    rotationLimits: { x: 45, y: 180, z: 0 },
+    scaleLimits: { min: .5, max: 1 }
 });
 
 //garbage_objs
@@ -232,80 +227,45 @@ loadGLBModel({
     ,
 });
 
-// PC glb
+//eidos
+const animationManager = new AnimationManager(scene);
 
-
-// iphone glb
-// loadGLBModel({
-//     modelPath: '/miqtum/models',
-//     name: 'iphone',
-//     scene,
-//     position: [.3, 1, 0],
-//     rotation: [0, 250, 0], // в градусах
-//     scale: 1
-//     ,
-// });
-
-//PC animated screen
-const PC = await loadAnimatedModelByMaterial(
-    '/miqtum/models/PC_mult_mat.glb',           // URL модели
-    '/miqtum/models/PC/signs_sq.mp4',          // URL видео
-    'SCREEN',                // Имя целевого материала
-    { x: 0, y: 0.5, z: 1.2 },            // Положение
-    { x: 0, y: 180, z: 0 },            // Поворот
-    1,                             // Масштаб
-    {                                // Настройки текстуры
-        offset: { x: 0, y: 0 },    // Смещение
-        repeat: { x: 1, y: 1 },    // Масштаб
-        rotation: 0,                   // Поворот
-        noTiling: true,                // Без повторения
-        blendMode: 'emissive'          // Режим наложения
-    }
+animationManager.loadGLB(
+    "/miqtum/models/eidos_anim.glb",
+    { x: 0, y: .6, z: -.25 },
+    { x: 0, y: 180, z: 0 },
+    .04
 );
 
-scene.add(PC);
+loadAnimatedTexByMaterial(
+    '/miqtum/models/PC/PC.glb',
+    '/miqtum/models/PC/signs.mp4',
+    'SCREEN',
+    { x: 0, y: .5, z: 1.5 },
+    { x: 0, y: 180, z: 0 },
+    1,
+    {
+        offset: { x: 0, y: 0 },
+        repeat: { x: 1, y: 1 },
+        rotation: 0,
+        noTiling: true,
+        blendMode: 'overlay'
+    }
+).then(PC => {
+    scene.add(PC);
+});
+
+
+//AnimatedTexUtils.setVideoIntensity(PC, 1);
 
 //#endregion
-
-// Без тайлинга (по умолчанию) - видео как наклейка поверх основного материала
-// const model1 = await loadModelWthAnimTex(
-//     '/miqtum/models/PC/PC.gltf',           // URL модели
-//     '/miqtum/models/PC/signs_sq.mp4',
-//     { x: 0, y: 0, z: 0 },
-//     { x: 0, y: 0, z: 0 },
-//     3.0,
-//     {
-//         offset: { x: 0, y: 0 },
-//         repeat: { x: 22, y: 22 },  // Маленькая текстура
-//         rotation: 15,
-//         noTiling: false,  // Видео как наклейка поверх основного материала
-//     }
-// );
-
-// PC with tex anim
-// const PC = await loadAnimatedModelSimple(
-//     '/miqtum/models/PC/PC.gltf',           // URL модели
-//      '/miqtum/models/PC/signs_sq.mp4',
-//     { x: 0, y: 0, z: 0 },
-//     { x: 0, y: 0, z: 0 },
-//     3,
-//     {
-//         offset: { x: 0, y: .5 },
-//         repeat: { x: 8, y: 8 },
-//         rotation: 0,
-//         noTiling: true  // Видео как emissive карта поверх основного материала
-//     }
-// );
-
-// scene.add(PC);
-
 
 //clicker
 const highlighter = highlightAndDelete({
     renderer,
     scene,
     camera,
-    except: ['particles', 'Cube010', 'Cube010_1', 'Cube010_2', 'Cube010_3', 'SCOOF_sitting']
+    except: ['particles', 'Plane', 'Icosphere001', 'Cube010', 'Cube010_1', 'Cube010_2', 'Cube010_3', 'SCOOF_sitting']
 });
 
 window.addEventListener('resize', onWindowResize);
@@ -319,7 +279,9 @@ function onWindowResize() {
 
 }
 
+
 function animate(time) {
+
     requestAnimationFrame(animate);
 
     prevTime = time;
@@ -327,8 +289,10 @@ function animate(time) {
     cameraLight.position.copy(camera.position); // свет следует за камерой
 
     controls.update();
-
+    renderer.render(scene, camera);
+    animationManager.update();
     render();
+
 
 }
 
@@ -349,8 +313,6 @@ window.addEventListener('load', () => {
         }
     }, 0);
 });
-
-console.log('load handler attached, marquee exists=', !!document.getElementById('marquee'));
 
 
 function render() {

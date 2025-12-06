@@ -72,439 +72,6 @@ export async function loadGLBModel({
 }
 
 /**
- * Загружает GLTF модель и добавляет анимированную текстуру из видео с настройкой UV
- * @param {string} modelUrl - URL GLTF модели
- * @param {string} videoUrl - URL видео файла для текстуры
- * @param {Object} position - Положение модели {x, y, z}
- * @param {Object} rotation - Поворот в градусах {x, y, z}
- * @param {number} scale - Масштаб модели
- * @param {Object} uvSettings - Настройки UV координат {offset: {x, y}, repeat: {x, y}, rotation: number, noTiling: boolean}
- * @returns {Promise<THREE.Group>} Promise с загруженной моделью
- */
-export async function loadModelWthAnimTex(
-  modelUrl,
-  videoUrl,
-  position,
-  rotation,
-  scale,
-  uvSettings = {
-    offset: { x: 0, y: 0 },
-    repeat: { x: 1, y: 1 },
-    rotation: 0,
-    noTiling: true  // По умолчанию без тайлинга
-  }
-) {
-  return new Promise((resolve, reject) => {
-    // Создаем группу для модели
-    const modelGroup = new THREE.Group();
-
-    // Создаем видео элемент и текстуру
-    const video = document.createElement('video');
-    video.src = videoUrl;
-    video.loop = true;
-    video.muted = true;
-    video.playsInline = true;
-    video.crossOrigin = 'anonymous';
-
-    const videoTexture = new THREE.VideoTexture(video);
-    videoTexture.minFilter = THREE.LinearFilter;
-    videoTexture.magFilter = THREE.LinearFilter;
-    videoTexture.format = THREE.RGBAFormat;
-
-    // Применяем настройки UV к текстуре
-    if (uvSettings.offset) {
-      videoTexture.offset = new THREE.Vector2(uvSettings.offset.x, uvSettings.offset.y);
-    }
-
-    if (uvSettings.repeat) {
-      videoTexture.repeat = new THREE.Vector2(uvSettings.repeat.x, uvSettings.repeat.y);
-    }
-
-    if (uvSettings.rotation !== undefined) {
-      videoTexture.rotation = THREE.MathUtils.degToRad(uvSettings.rotation);
-    }
-
-    // Настройка wrapping в зависимости от noTiling
-    if (uvSettings.noTiling) {
-      videoTexture.wrapS = THREE.ClampToEdgeWrapping;
-      videoTexture.wrapT = THREE.ClampToEdgeWrapping;
-    } else {
-      videoTexture.wrapS = THREE.RepeatWrapping;
-      videoTexture.wrapT = THREE.RepeatWrapping;
-    }
-
-    // Загружаем модель
-    const loader = new GLTFLoader();
-
-    loader.load(
-      modelUrl,
-      (gltf) => {
-        const model = gltf.scene;
-
-        // Применяем трансформации
-        model.position.set(position.x, position.y, position.z);
-
-        // Конвертируем градусы в радианы для поворота
-        model.rotation.set(
-          THREE.MathUtils.degToRad(rotation.x),
-          THREE.MathUtils.degToRad(rotation.y),
-          THREE.MathUtils.degToRad(rotation.z)
-        );
-
-        model.scale.set(scale, scale, scale);
-
-        // Применяем анимированную текстуру ко всем мешам
-        model.traverse((child) => {
-          if (child.isMesh) {
-            // Сохраняем оригинальный материал
-            const originalMaterial = child.material;
-            child.userData.originalMaterial = originalMaterial;
-
-            // Создаем материал для видео текстуры
-            const videoMaterial = new THREE.MeshBasicMaterial({
-              map: videoTexture,
-              transparent: true,
-              opacity: 1.0,
-              side: THREE.DoubleSide,
-              blending: THREE.NormalBlending,
-              depthWrite: false
-            });
-
-            // Если noTiling true, используем оба материала (мультиматериал)
-            if (uvSettings.noTiling) {
-              // Создаем массив материалов: сначала оригинальный, затем видео
-              child.material = [
-                originalMaterial,    // Основной материал (нижний слой)
-                videoMaterial        // Видео текстура (верхний слой)
-              ];
-            } else {
-              // Если тайлинг включен, заменяем материал полностью
-              child.material = videoMaterial;
-            }
-
-            // Сохраняем настройки UV для возможного изменения в реальном времени
-            child.userData.uvSettings = uvSettings;
-            child.userData.videoTexture = videoTexture;
-            child.userData.videoMaterial = videoMaterial;
-          }
-        });
-
-        // Добавляем модель в группу
-        modelGroup.add(model);
-
-        // Сохраняем ссылки для удобства
-        modelGroup.userData = {
-          model: model,
-          video: video,
-          videoTexture: videoTexture,
-          originalGltf: gltf,
-          uvSettings: uvSettings
-        };
-
-        // Запускаем видео когда оно готово
-        video.addEventListener('loadeddata', () => {
-          video.play().then(() => {
-            resolve(modelGroup);
-          }).catch(error => {
-            console.warn('Автовоспроизведение видео заблокировано:', error);
-            resolve(modelGroup);
-          });
-        });
-
-        video.load();
-      },
-      (progress) => {
-        // Прогресс загрузки можно обработать здесь
-        console.log(`Загрузка модели: ${(progress.loaded / progress.total * 100).toFixed(2)}%`);
-      },
-      (error) => {
-        reject(new Error(`Ошибка загрузки модели: ${error.message}`));
-      }
-    );
-  });
-}
-
-// Дополнительные утилиты для управления моделью и UV координатами
-export const ModelWthAnimTexUtils = {
-  /**
-   * Запускает/останавливает анимацию видео
-   * @param {THREE.Group} modelGroup - Группа модели
-   * @param {boolean} play - true для воспроизведения, false для паузы
-   */
-  toggleVideoAnimation(modelGroup, play = true) {
-    if (modelGroup.userData.video) {
-      if (play) {
-        modelGroup.userData.video.play();
-      } else {
-        modelGroup.userData.video.pause();
-      }
-    }
-  },
-
-  /**
-   * Сбрасывает видео на начало
-   * @param {THREE.Group} modelGroup - Группа модели
-   */
-  resetVideoAnimation(modelGroup) {
-    if (modelGroup.userData.video) {
-      modelGroup.userData.video.currentTime = 0;
-    }
-  },
-
-  /**
-   * Восстанавливает оригинальные материалы модели
-   * @param {THREE.Group} modelGroup - Группа модели
-   */
-  restoreOriginalMaterials(modelGroup) {
-    modelGroup.traverse((child) => {
-      if (child.isMesh && child.userData.originalMaterial) {
-        child.material = child.userData.originalMaterial;
-      }
-    });
-  },
-
-  /**
-   * Устанавливает прозрачность видео текстуры
-   * @param {THREE.Group} modelGroup - Группа модели
-   * @param {number} opacity - Прозрачность от 0 до 1
-   */
-  setVideoOpacity(modelGroup, opacity) {
-    modelGroup.traverse((child) => {
-      if (child.isMesh && child.userData.videoMaterial) {
-        child.userData.videoMaterial.opacity = opacity;
-        child.userData.videoMaterial.transparent = opacity < 1.0;
-      }
-    });
-  },
-
-  /**
-   * Переключает режим тайлинга
-   * @param {THREE.Group} modelGroup - Группа модели
-   * @param {boolean} noTiling - true для отключения тайлинга, false для включения
-   */
-  setTilingMode(modelGroup, noTiling) {
-    modelGroup.traverse((child) => {
-      if (child.isMesh && child.userData.videoTexture && child.userData.originalMaterial) {
-        const texture = child.userData.videoTexture;
-
-        // Обновляем wrapping
-        if (noTiling) {
-          texture.wrapS = THREE.ClampToEdgeWrapping;
-          texture.wrapT = THREE.ClampToEdgeWrapping;
-        } else {
-          texture.wrapS = THREE.RepeatWrapping;
-          texture.wrapT = THREE.RepeatWrapping;
-        }
-
-        // Обновляем материал в зависимости от режима
-        if (noTiling && !Array.isArray(child.material)) {
-          // Переключаемся на многослойный материал
-          child.material = [
-            child.userData.originalMaterial,
-            child.userData.videoMaterial
-          ];
-        } else if (!noTiling && Array.isArray(child.material)) {
-          // Переключаемся на одинарный материал с видео
-          child.material = child.userData.videoMaterial;
-        }
-
-        texture.needsUpdate = true;
-        child.userData.uvSettings.noTiling = noTiling;
-      }
-    });
-
-    modelGroup.userData.uvSettings.noTiling = noTiling;
-  },
-
-  /**
-   * Обновляет UV параметры текстуры в реальном времени
-   * @param {THREE.Group} modelGroup - Группа модели
-   * @param {Object} uvSettings - Новые настройки UV {offset: {x, y}, repeat: {x, y}, rotation: number, noTiling: boolean}
-   */
-  updateUVSettings(modelGroup, uvSettings) {
-    modelGroup.traverse((child) => {
-      if (child.isMesh && child.userData.videoTexture) {
-        const texture = child.userData.videoTexture;
-
-        if (uvSettings.offset) {
-          texture.offset.set(uvSettings.offset.x, uvSettings.offset.y);
-        }
-
-        if (uvSettings.repeat) {
-          texture.repeat.set(uvSettings.repeat.x, uvSettings.repeat.y);
-        }
-
-        if (uvSettings.rotation !== undefined) {
-          texture.rotation = THREE.MathUtils.degToRad(uvSettings.rotation);
-        }
-
-        if (uvSettings.noTiling !== undefined) {
-          AnimatedModelUtils.setTilingMode(modelGroup, uvSettings.noTiling);
-        }
-
-        texture.needsUpdate = true;
-        child.userData.uvSettings = { ...child.userData.uvSettings, ...uvSettings };
-      }
-    });
-
-    // Обновляем настройки в userData группы
-    modelGroup.userData.uvSettings = { ...modelGroup.userData.uvSettings, ...uvSettings };
-  },
-
-  /**
-   * Сдвигает текстуру по UV координатам
-   * @param {THREE.Group} modelGroup - Группа модели
-   * @param {number} u - Смещение по U
-   * @param {number} v - Смещение по V
-   */
-  offsetTexture(modelGroup, u, v) {
-    AnimatedModelUtils.updateUVSettings(modelGroup, {
-      offset: { x: u, y: v }
-    });
-  },
-
-  /**
-   * Масштабирует текстуру по UV координатам
-   * @param {THREE.Group} modelGroup - Группа модели
-   * @param {number} scaleU - Масштаб по U
-   * @param {number} scaleV - Масштаб по V
-   */
-  scaleTexture(modelGroup, scaleU, scaleV) {
-    AnimatedModelUtils.updateUVSettings(modelGroup, {
-      repeat: { x: scaleU, y: scaleV }
-    });
-  },
-
-  /**
-   * Поворачивает текстуру
-   * @param {THREE.Group} modelGroup - Группа модели
-   * @param {number} degrees - Угол поворота в градусах
-   */
-  rotateTexture(modelGroup, degrees) {
-    AnimatedModelUtils.updateUVSettings(modelGroup, {
-      rotation: degrees
-    });
-  }
-};
-
-export async function loadAnimatedModelSimple(
-  modelUrl,
-  videoUrl,
-  position,
-  rotation,
-  scale,
-  uvSettings = {
-    offset: { x: 0, y: 0 },
-    repeat: { x: 1, y: 1 },
-    rotation: 0,
-    noTiling: true
-  }
-) {
-  return new Promise((resolve, reject) => {
-    const modelGroup = new THREE.Group();
-
-    const video = document.createElement('video');
-    video.src = videoUrl;
-    video.loop = true;
-    video.muted = true;
-    video.playsInline = true;
-    video.crossOrigin = 'anonymous';
-
-    const videoTexture = new THREE.VideoTexture(video);
-    videoTexture.minFilter = THREE.LinearFilter;
-    videoTexture.magFilter = THREE.LinearFilter;
-
-    // Применяем UV настройки
-    if (uvSettings.offset) {
-      videoTexture.offset.set(uvSettings.offset.x, uvSettings.offset.y);
-    }
-    if (uvSettings.repeat) {
-      videoTexture.repeat.set(uvSettings.repeat.x, uvSettings.repeat.y);
-    }
-    if (uvSettings.rotation !== undefined) {
-      videoTexture.rotation = THREE.MathUtils.degToRad(uvSettings.rotation);
-    }
-
-    // Настройка wrapping
-    videoTexture.wrapS = uvSettings.noTiling ? THREE.ClampToEdgeWrapping : THREE.RepeatWrapping;
-    videoTexture.wrapT = uvSettings.noTiling ? THREE.ClampToEdgeWrapping : THREE.RepeatWrapping;
-
-    const loader = new GLTFLoader();
-
-    loader.load(
-      modelUrl,
-      (gltf) => {
-        const model = gltf.scene;
-
-        model.position.set(position.x, position.y, position.z);
-        model.rotation.set(
-          THREE.MathUtils.degToRad(rotation.x),
-          THREE.MathUtils.degToRad(rotation.y),
-          THREE.MathUtils.degToRad(rotation.z)
-        );
-        model.scale.set(scale, scale, scale);
-
-        model.traverse((child) => {
-          if (child.isMesh) {
-            const originalMaterial = child.material;
-            child.userData.originalMaterial = originalMaterial;
-
-            if (uvSettings.noTiling && originalMaterial.isMaterial) {
-              // Создаем копию оригинального материала
-              const newMaterial = originalMaterial.clone();
-
-              // Добавляем видео текстуру как emissive карту для свечения
-              newMaterial.emissiveMap = videoTexture;
-              newMaterial.emissive = new THREE.Color(0xffffff);
-
-              // Настраиваем смешивание
-              newMaterial.transparent = true;
-
-              child.material = newMaterial;
-
-            } else {
-              // Заменяем материал полностью
-              const videoMaterial = new THREE.MeshBasicMaterial({
-                map: videoTexture,
-                transparent: true,
-                side: THREE.DoubleSide
-              });
-              child.material = videoMaterial;
-            }
-
-            child.userData.uvSettings = uvSettings;
-            child.userData.videoTexture = videoTexture;
-          }
-        });
-
-        modelGroup.add(model);
-        modelGroup.userData = {
-          model: model,
-          video: video,
-          videoTexture: videoTexture,
-          originalGltf: gltf,
-          uvSettings: uvSettings
-        };
-
-        video.addEventListener('loadeddata', () => {
-          video.play().then(() => {
-            resolve(modelGroup);
-          }).catch(error => {
-            console.warn('Автовоспроизведение видео заблокировано:', error);
-            resolve(modelGroup);
-          });
-        });
-
-        video.load();
-      },
-      null,
-      reject
-    );
-  });
-}
-
-
-/**
  * Загружает GLTF модель и применяет видео текстуру к конкретному материалу по имени
  * @param {string} modelUrl - URL GLTF модели
  * @param {string} videoUrl - URL видео файла для текстуры
@@ -515,7 +82,7 @@ export async function loadAnimatedModelSimple(
  * @param {Object} textureSettings - Настройки текстуры {offset: {x, y}, repeat: {x, y}, rotation: number, noTiling: boolean, blendMode: string}
  * @returns {Promise<THREE.Group>} Promise с загруженной моделью
  */
-export async function loadAnimatedModelByMaterial(
+export async function loadAnimatedTexByMaterial(
   modelUrl,
   videoUrl,
   targetMaterialName,
@@ -701,7 +268,7 @@ export async function loadAnimatedModelByMaterial(
 }
 
 // Утилиты для управления анимированными материалами
-export const AnimatedMaterialUtils = {
+export const AnimatedTexUtils = {
   /**
    * Запускает/останавливает анимацию видео
    * @param {THREE.Group} modelGroup - Группа модели
@@ -879,7 +446,6 @@ export const AnimatedMaterialUtils = {
     }
   }
 };
-
 
 export async function randomScatterGLB({
   url,
@@ -1078,4 +644,69 @@ export async function randomScatterInstances({
   }
 }
 
+export class AnimationManager {
+  constructor(scene) {
+    this.scene = scene;
+    this.mixers = [];
+    this.clock = new THREE.Clock();
+    this.loader = new GLTFLoader();
+    this.cache = new Map(); // кэш GLB
+  }
 
+  // Загрузка GLB + кэширование + автозапуск всех анимаций
+  async loadGLB(url, position = { x: 0, y: 0, z: 0 }, rotation = { x: 0, y: 0, z: 0 }, scale = 1) {
+    // если модель есть в кэше
+    if (this.cache.has(url)) {
+      const cached = this.cache.get(url);
+      const model = cached.scene.clone(true);
+
+      this.applyTransform(model, position, rotation, scale);
+      this.scene.add(model);
+
+      const mixer = new THREE.AnimationMixer(model);
+      cached.animations.forEach(clip => mixer.clipAction(clip).play());
+      this.mixers.push(mixer);
+
+      return { model, mixer };
+    }
+
+    // грузим GLB
+    const gltf = await new Promise((resolve, reject) => {
+      this.loader.load(url, resolve, undefined, reject);
+    });
+
+    // кладём в кэш оригинал
+    this.cache.set(url, {
+      scene: gltf.scene,
+      animations: gltf.animations
+    });
+
+    // клонируем экземпляр
+    const model = gltf.scene.clone(true);
+    this.applyTransform(model, position, rotation, scale);
+    this.scene.add(model);
+
+    // создаём и запускаем миксер
+    const mixer = new THREE.AnimationMixer(model);
+    gltf.animations.forEach(clip => mixer.clipAction(clip).play());
+    this.mixers.push(mixer);
+
+    return { model, mixer };
+  }
+
+  applyTransform(model, position, rotation, scale) {
+    model.position.set(position.x, position.y, position.z);
+    model.rotation.set(
+      THREE.MathUtils.degToRad(rotation.x),
+      THREE.MathUtils.degToRad(rotation.y),
+      THREE.MathUtils.degToRad(rotation.z)
+    );
+    model.scale.setScalar(scale);
+  }
+
+  // обновление всех анимаций
+  update() {
+    const delta = this.clock.getDelta();
+    this.mixers.forEach(m => m.update(delta));
+  }
+}
